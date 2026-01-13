@@ -177,12 +177,14 @@
 
     // CPU
     "cpu": {
-        "format": "{usage}% "
+        "format": "{usage}% ",
+        "interval": 1
     },
 
     // Memory
     "memory": {
-        "format": "{}% "
+        "format": "{}% ",
+        "interval": 1
     },
 
     // Temperature
