@@ -74,6 +74,7 @@ misc_packages=(
 )
 
 # Install required packages
+#shellcheck disable=2068
 sudo pacman -Syy --needed ${system_packages[@]} ${dev_packages[@]} ${misc_packages[@]}
 
 # Activate services
@@ -103,15 +104,15 @@ fi
 # Creating the symlinks for all the dotfiles
 if ! [ -d "$HOME/.config/waybar" ]; then
 	echo "-- Creating symlinks for all dotfiles..."
-	echo "-- Creting symlink for 'qt6ct'...
+	echo "-- Creting symlink for 'qt6ct'..."
 	ln -sfn "$root/qt6ct" "$HOME/.config/qt6ct"
 
-	echo "-- Creting symlink for 'waybar'...
+	echo "-- Creting symlink for 'waybar'..."
 	ln -sfn "$root/waybar" "$HOME/.config/waybar"
 
-	echo "-- Creting symlink for 'hypr'...
+	echo "-- Creting symlink for 'hypr'..."
 	ln -sfn "$root/hypr" "$HOME/.config/hypr"
 
-	echo "-- Creting symlink for 'kitty'...
+	echo "-- Creting symlink for 'kitty'..."
 	ln -sfn "$root/kitty" "$HOME/.config/kitty"
 fi
