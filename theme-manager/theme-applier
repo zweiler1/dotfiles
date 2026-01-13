@@ -1,0 +1,346 @@
+#!/bin/sh
+
+# functions
+printUsage() {
+    echo "Description:
+    Applies the active theme in '$HOME/.config/themes/active' to config files
+    wich do not depend on .css files. Which config files get edited is dependant on
+    the configuration in '$HOME/.config/theme-applier/theme-applier.conf'
+    
+Usage:
+    theme-applier <OPTION> ...
+    
+Options:
+    -h  --help                      Show this help message
+        --auto-update               Flag to 'detect' automatic execution of this script.
+                                    It checks the auto_update variable in the config and updates if it is set to 1
+    -a  --apply <variable> ...      Apply theme <variables>:    
+                                        h: Applies Hyprland
+                                        p: Applies Hyprpaper
+                                        d: Applies dunst
+                                        w: Applies waybar
+                                        b: Applies bashrc
+                                        k: Applies kitty
+                                        q: Applies qt theme
+    -s  --set   <name> <true/false> Set the variable <name> to <true/false>
+                                        <auto>:         Automatically apply the current theme on system startup
+                                        <hyprland>:     Determines if hyprland has to be updated when theme is applied
+                                        <hyprpaper>:    Determines if hyprpaper (Wallpaper) has to be updated when the theme is applied
+                                        <dunst>:        Determines if dunst has to be updated when theme is applied
+                                        <waybar>:       Determines if waybar has to be updated when theme is applied
+                                        <bash>:         Determines if bashrc has to be updated when theme is applied
+                                        <kitty>:        Determines if kitty has to be updated when theme is applied
+                                        <qt>:           Determines if qt theme has to be updated when theme is applied  
+    -g  --get   <name>              Get the value of the variable <name>
+                                        If <name> is 'all', will print all variables
+    -i  --init                      Starts the initial setup and asks for all variables to set them. Creates the config file."
+}
+
+# error codes
+# 0 - success
+# 1 - missing argument(s)
+# 2 - wrong argument(s)
+# 3 - missing dependecy
+# 4 - wrong configuration file
+# 5 - internal error
+
+# Prints the given error message and exits with the given exit code
+# $1 - exit code
+# $2 - error message
+printErr() {
+    echo "Error: $2" >&2
+    echo 'Use -h or --help to display help' >&2
+    exit "$1"
+}
+
+colorHexFile="$HOME/.config/theme-manager/themes/active/colors/colors-hex.txt"
+colorShRgbFile="$HOME/.config/theme-manager/themes/active/colors/colors-rgb.txt"
+
+# removing all empty lines from the color files
+sed -i '/^$/d' "$colorHexFile"
+sed -i '/^$/d' "$colorShRgbFile"
+
+# read first two and last two colors from the color hex file
+color0Hex=$(head -n 1 "$colorHexFile" | sed 's/#//g')
+color1Hex=$(head -n 2 "$colorHexFile" | tail -n 1 | sed 's/#//g')
+color2Hex=$(tail -n 3 "$colorHexFile" | head -n 1 | sed 's/#//g')
+color3Hex=$(tail -n 2 "$colorHexFile" | head -n 1 | sed 's/#//g')
+color4Hex=$(tail -n 1 "$colorHexFile" | sed 's/#//g')
+
+color0ShRgb="e[38;2;$(head -n 1 "$colorShRgbFile" | sed "s/ /;/g")m"
+color1ShRgb="e[38;2;$(head -n 2 "$colorShRgbFile" | sed "s/ /;/g" | tail -n 1)m"
+color2ShRgb="e[38;2;$(tail -n 3 "$colorShRgbFile" | sed "s/ /;/g" | head -n 1)m"
+color3ShRgb="e[38;2;$(tail -n 2 "$colorShRgbFile" | sed "s/ /;/g" | head -n 1)m"
+color4ShRgb="e[38;2;$(tail -n 1 "$colorShRgbFile" | sed "s/ /;/g")m"
+
+configPath="$HOME/.config/theme-manager/theme-applier.conf"
+hyprlandPath="$HOME/.config/hypr/hyprland.conf"
+hyprpaperPath="$HOME/.config/hypr/hyprpaper.conf"
+bashrcPath="$HOME/.bashrc"
+dunstPath="$HOME/.config/dunst/dunstrc"
+kittyPath="$HOME/.config/kitty/kitty.conf"
+
+printColors() {
+    echo 'Hex Colors:'
+    echo "    $color0Hex"
+    echo "    $color1Hex"
+    echo "    $color2Hex"
+    echo "    $color3Hex"
+    echo "    $color4Hex"
+    echo
+    echo 'Sh RGB Colors:'
+    echo "    $color0ShRgb"
+    echo "    $color1ShRgb"
+    echo "    $color2ShRgb"
+    echo "    $color3ShRgb"
+    echo "    $color4ShRgb"
+}
+
+updateHyprland() {
+    echo 'updating the hyprland theme...'
+    cp "$hyprlandPath" '/tmp/hyprland.conf'
+
+    sed -i "s/col.active_border = [^#]*/col.active_border = rgb($color4Hex)/g" '/tmp/hyprland.conf'
+    sed -i "s/col.inactive_border = [^#]*/col.inactive_border = rgb($color1Hex)/g" '/tmp/hyprland.conf'
+    mv '/tmp/hyprland.conf' "$hyprlandPath"
+}
+
+updateHyprpaper() {
+    echo 'updating the hyprpaper wallpaper path...'
+    cp "$hyprpaperPath" '/tmp/hyprpaper.conf'
+    wallpaper="$(find "$HOME/.config/theme-manager/themes/active/Wallpaper/" -name "wallpaper.*" -exec basename {} \;)"
+    wallpaperPath="$HOME/.config/theme-manager/themes/active/Wallpaper/$wallpaper"
+
+    # Replaces all paths with the new path
+    sed -i "s|/[^ ]*|$wallpaperPath|g" '/tmp/hyprpaper.conf'
+    mv '/tmp/hyprpaper.conf' "$hyprpaperPath"
+
+    pkill hyprpaper
+    (hyprpaper &) 1>/dev/null
+}
+
+updateDunst() {
+    echo 'updating the dunst theme...'
+    cp "$dunstPath" '/tmp/dunstrc'
+
+    sed -i "s/frame_color[ ]*=[ ]*\"#[^\"]*\"/frame_color = \"#$color4Hex\"/g" '/tmp/dunstrc'
+    sed -i "s/background[ ]*=[ ]*\"#[^\"]*\"[ ]*#0/background = \"#$color1Hex\" #0/g" '/tmp/dunstrc'
+    sed -i "s/foreground[ ]*=[ ]*\"#[^\"]*\"[ ]*#0/foreground = \"#$color4Hex\" #0/g" '/tmp/dunstrc'
+    sed -i "s/background[ ]*=[ ]*\"#[^\"]*\"[ ]*#1/background = \"#$color0Hex\" #1/g" '/tmp/dunstrc'
+    sed -i "s/foreground[ ]*=[ ]*\"#[^\"]*\"[ ]*#1/foreground = \"#$color4Hex\" #1/g" '/tmp/dunstrc'
+    sed -i "s/background[ ]*=[ ]*\"#[^\"]*\"[ ]*#2/background = \"#$color3Hex\" #2/g" '/tmp/dunstrc'
+    sed -i "s/foreground[ ]*=[ ]*\"#[^\"]*\"[ ]*#2/foreground = \"#$color4Hex\" #2/g" '/tmp/dunstrc'
+
+    mv '/tmp/dunstrc' "$dunstPath"
+    (pkill dunst && dunst &) &>/dev/null
+}
+
+updateWaybar() {
+    echo 'rebooting waybar...'
+    pkill waybar
+    (waybar &) 1>/dev/null
+}
+
+editBashRC() {
+    lineNum=$(grep -n "export $1" '/tmp/bashrc_original' | cut -d ':' -f 1)
+    newLine="export $1='\\${2}'"
+
+    sed -i "${lineNum}"',$d' '/tmp/bashrc_edited'
+    echo "$newLine" >> '/tmp/bashrc_edited'
+    lineNum=$((lineNum + 1))
+    tail -n "+$lineNum" '/tmp/bashrc_original' >> '/tmp/bashrc_edited'
+}
+
+updateBashRC() {
+    echo 'updating the bashrc theme...'
+    cp "$bashrcPath" '/tmp/bashrc_original'
+    cp "$bashrcPath" '/tmp/bashrc_edited'
+
+    editBashRC 'COLOR_USER' "${color4ShRgb}"
+    editBashRC 'COLOR_PATH' "${color3ShRgb}"
+    editBashRC 'COLOR_GIT' "${color2ShRgb}"
+
+    rm '/tmp/bashrc_original'
+    mv '/tmp/bashrc_edited' "$bashrcPath"
+    #source "$HOME/.bashrc"
+}
+
+editKitty() {
+    lines=$(grep -n "$1 #" '/tmp/kitty_original' | grep -v ':#' | cut -d ':' -f 1)
+    for lineNum in $lines; do
+        newLine="$1 #$2"
+
+        sed -i "${lineNum}"',$d' '/tmp/kitty_edited'
+        echo "$newLine" >> '/tmp/kitty_edited'
+        lineNum=$((lineNum + 1))
+        tail -n "+$lineNum" '/tmp/kitty_original' >> '/tmp/kitty_edited'
+    done
+}
+
+updateKitty() {
+    echo 'updating the kitty theme...'
+    cp "$kittyPath" '/tmp/kitty.conf'
+
+    sed -i "s/^#\?[ ]\?foreground[ ]*#.*/foreground #$color4Hex/g" '/tmp/kitty.conf'
+    sed -i "s/^#\?[ ]\?background[ ]*#.*/background #$color0Hex/g" '/tmp/kitty.conf'
+    sed -i "s/^#\?[ ]\?background_opacity[ ].*/background_opacity 0.4/g" '/tmp/kitty.conf'
+    sed -i "s/^#\?[ ]\?background_blur[ ].*/background_blur 1/g" '/tmp/kitty.conf'
+
+    mv '/tmp/kitty.conf' "$kittyPath"
+}
+
+updateQT() {
+    echo 'updating the qt theme...'
+    echo '    Not yet implemented'
+}
+
+editApplierConfig() {
+    case "$1" in
+        auto) varName='auto_update' ;;
+        hyprland) varName='update_hyprland' ;;
+        hyprpaper) varName='update_hyprpaper' ;;
+        dunst) varName='update_dunst' ;;
+        bash) varName='update_bashrc' ;;
+        kitty) varName='update_kitty' ;;
+        qt) varName='update_qt' ;;
+        waybar) varName='update_waybar' ;;
+        *) printErr 2 "Wrong format on option: '$1'" ;;
+    esac
+
+    if [ "$2" = 'true' ] || [ "$2" = '1' ]; then
+        state='true'
+    elif [ "$2" = 'false' ] || [ "$2" = '0' ]; then
+        state='false'
+    else
+        printErr 2 "Wrong format on option: '$2'"
+    fi
+    sed -i "s/$varName.*/$varName = $state/g" "$configPath"
+}
+
+# Asks the user if they want a specific variable turned on or off
+# $1 - The variable which gets turned on or off
+askToSetVariable() {
+    echo "Do you want to enable '$1'? (Y/n)"
+    read -r input
+    if [ "$(echo "$input" | grep -Ei '[Yy][Ee]?[Ss]?')" != "" ]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+initializeConfig() {
+    # Initialize all variables as false, reset them to true if the input was yes
+    auto='false'
+    hyprland='false'
+    hyprpaper='false'
+    dunst='false'
+    waybar='false'
+    bash='false'
+    kitty='false'
+    qt='false'
+    askToSetVariable 'auto' && auto=true
+    askToSetVariable 'hyprland' && hyprland=true
+    askToSetVariable 'hyprpaper' && hyprpaper=true
+    askToSetVariable 'dunst' && dunst=true
+    askToSetVariable 'waybar' && waybar=true
+    askToSetVariable 'bash' && bash=true
+    askToSetVariable 'kitty' && kitty=true
+    askToSetVariable 'qt' && qt=true
+    
+    echo "# The configuration file for the theme-applier
+auto_update = $auto
+update_hyprland = $hyprland
+update_hyprpaper = $hyprpaper
+update_dunst = $dunst
+update_waybar = $waybar
+update_bashrc = $bash
+update_kitty = $kitty
+update_qt = $qt" > "$configPath" 
+    
+    echo 'Configuration file initialized successfully!'
+}
+
+# Checks if a given string contains all of the given substrings
+# $1 - The string which is searched through
+# $2-$# - The substrings for which is searched
+stringContains() {
+    [ $# -lt 2 ] && printErr 'There has to be at least one string to search for.'
+    input="$1"
+    shift
+    while [ $# -gt 0 ]; do
+        if [ "$(echo "$input" | grep "$1")" = "" ]; then
+            return 1
+        fi
+        shift
+    done
+    return 0
+}
+
+if ! [ -r "$configPath" ]; then
+    echo "The configuration file is abscent. 
+You are guided throug the questions needed to create one.
+"
+    initializeConfig
+    exit 0
+fi
+
+# check the parameters
+case "$1" in
+    -h | --help) printUsage && exit 0 ;;
+    -s | --set) editApplierConfig "$2" "$3" && exit 0 ;;
+    -i | --init) initializeConfig && exit 0 ;;
+    -a | --appy)
+        tmp="$2"
+        while [ -n "$tmp" ]; do
+            rest="${tmp#?}"        # All but the first character of the string
+            first="${tmp%"$rest"}" # Remove $rest, and you're left with the first character
+            case "$first" in
+                h) updateHyprland ;;
+                p) updateHyprpaper ;;
+                d) updateDunst ;;
+                b) updateBashRC ;;
+                k) updateKitty ;;
+                q) updateQT ;;
+                w) updateWaybar ;;
+                *) printErr 2 "Wrong format on option: $first" ;;
+            esac
+            tmp="$rest"
+        done
+        exit 0
+        ;;
+    -g | --get)
+        case "$2" in
+            auto) varName='auto_update' ;;
+            hyprland) varName='update_hyprland' ;;
+            hyprpaper) varName='update_hyprpaper' ;;
+            dunst) varName='update_dunst' ;;
+            bash) varName='update_bashrc' ;;
+            kitty) varName='update_kitty' ;;
+            qt) varName='update_qt' ;;
+            waybar) varName='update_waybar' ;;
+            all)
+                grep -v '#' "$configPath" | sed 's/\(.*\)/    \1/g'
+                exit 0 ;;
+            *) printErr 2 "Wrong format option: '$2'"
+        esac
+
+        grep "$varName" "$configPath" | sed 's/[^=]*= \([^ ]\)/\1/'
+        exit 0 ;;
+    --auto-update)
+        # Exits the program if in the configuration auto_update is not enabled.
+        doAutoUpdate=$(grep 'auto_update' "$configPath" | sed 's/[^=]*= \([^ ]\)/\1/')
+        [ "$doAutoUpdate" = 'true' ] || exit 0 ;;
+    *) printErr 2 "Wrong parameter '$1'" ;;
+esac
+
+# read which configs to edit from the config file
+while IFS= read -r line; do
+    stringContains "$line" 'update_hyprland' 'true' && updateHyprland
+    stringContains "$line" 'update_hyprpaper' 'true' && updateHyprpaper
+    stringContains "$line" 'update_dunst' 'true' && updateDunst
+    stringContains "$line" 'update_waybar' 'true' && updateWaybar
+    stringContains "$line" 'update_bashrc' 'true' && updateBashRC
+    stringContains "$line" 'update_kitty' 'true' && updateKitty
+    stringContains "$line" 'update_qt' 'true' && updateQT
+done < "$configPath"

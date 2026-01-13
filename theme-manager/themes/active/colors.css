@@ -1,0 +1,8 @@
+@import './colors/colors-gtk.css';
+
+@define-color backgroundColor @color0;
+@define-color detailColor @color1;
+@define-color hoverColor @color2;
+@define-color borderColor @color3;
+@define-color textColor @color4;
+@define-color transparent rgba(0, 0, 0, 0);
