@@ -5,13 +5,14 @@ root="$(cd "$(dirname "$0")" && pwd)"
 if [ "$(grep "zweileros" /etc/pacman.conf)" = "" ]; then
 	echo "-- Adding the [zweileros] keyring to pacman .."
 	tempfile=$(mktemp)
-	wget "https://zweilerserver.ddns.net/PacmanRepo/zweileros/zweileros-keyring-1.0.0-1-any.pkg.tar.zst" $tempfile
-	sudo pacman -U $tempfile
+	wget --output-document "$tempfile" "https://zweilerserver.ddns.net/PacmanRepo/zweileros/zweileros-keyring-1.0.0-1-any.pkg.tar.zst"
+	sudo pacman -U "$tempfile"
 
-	echo "-- Adding the [zweileros] repo to pacman.conf .."
-	echo '' >> /etc/pacman.conf
-	echo '[zweileros]' >> /etc/pacman.conf
-	echo 'Server = https://zweilerserver.ddns.net/PacmanRepo/$repo' >> /etc/pacman.conf
+	sudo tee -a /etc/pacman.conf >/dev/null <<EOF
+
+[zweileros]
+Server = https://zweilerserver.ddns.net/PacmanRepo/\$repo
+EOF
 fi
 
 system_packages=(
@@ -96,9 +97,9 @@ asusctl profile -a Balanced
 # Fetching the neovim config
 if ! [ -d "$HOME/.config/nvim" ]; then
 	echo "-- Cloning the 'zweiler1/kickstart.nvim' repo into '$HOME/.config/nvim'..."
-	cd $HOME/.config
+	cd "$HOME/.config" || exit 1
 	git clone "https://github.com/zweiler1/kickstart.nvim.git"
-	cd $HOME
+	cd "$HOME" || exit 1
 fi
 
 # Creating the symlinks for all the dotfiles
