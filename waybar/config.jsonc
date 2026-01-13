@@ -1,0 +1,77 @@
+// -*- mode: jsonc -*-
+{
+    // Waybar at top layer
+    "layer": "top",
+
+    // Waybar position (top|bottom|left|right)
+    // "position": "bottom",
+
+    // Waybar height (to be removed for auto height)
+    //"height": 24,
+
+    // Waybar width
+    // "width": 1280,
+    // Gaps between modules (4px)
+    "spacing": 4,
+
+    // Modules Configuration
+    "include": ["~/.config/waybar/configuration.json"],
+
+    // Modules Left
+    "modules-left": [
+        //"hyprland/scratchpad",
+        "custom/media",
+        "clock",
+        "cpu",
+        "memory",
+        //"disk",
+        //"hyprland/window",
+        "hyprland/submap"
+        //"wlr/taskbar"
+    ],
+
+    // Modules Center
+    "modules-center": [
+        "hyprland/workspaces"
+    ],
+
+    // Modules Right
+    "modules-right": [
+        "tray",
+        //"mpd",
+        //"group/media",
+        "pulseaudio",
+        "network",
+        "backlight",
+        //"idle_inhibitor",
+        "battery"
+        //"custom/exit",
+        //"scratchpad",
+        //"power-profiles-daemon",
+        //"tlp",
+        //"temperature",
+        //"idle_inhibitor",
+        //"keyboard-state",
+        //"hyprland/language",
+        //"battery"
+        //"battery#bat2",
+    ],
+
+    // Energy Group
+    "group/energy": {
+        "orientation": "horizontal",
+        "modules": [
+            "idle_inhibitor",
+            "battery"
+        ]
+    },
+
+    // Media Group
+    "group/media": {
+        "orientation": "horizontal",
+        "modules": [
+            "custom/media",
+            "pulseaudio"
+        ]
+    }
+}
