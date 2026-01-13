@@ -72,6 +72,7 @@ misc_packages=(
 	dolphin
 	ark
 	gwenview
+	nextcloud-client
 )
 
 # Install required packages
