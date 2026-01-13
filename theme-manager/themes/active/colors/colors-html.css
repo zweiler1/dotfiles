@@ -1,15 +1,7 @@
 :root {
-	--color0: #050E10; /*backgroundColor*/
-	--color1: #415C4D; /*detailColor*/
-	--color2: #738E73; /*hoverColor*/
-	--color3: #839C7E; /*borderColor*/
-	--color4: #98AF8E; /*textColor*/
-
-	--background: #050E10;
-	--base: #050E10;
-	--alternate_base: #272727;
-	--text: #98AF8E;
-	--bright_text: #98AF8E;
-	--accent: #839C7E;
-	--accent_secondary: #839C7E;
+	--color0: #050E10;
+	--color1: #415C4D;
+	--color2: #738E73;
+	--color3: #839C7E;
+	--color4: #98AF8E;
 }
