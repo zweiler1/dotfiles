@@ -41,9 +41,13 @@ system_packages=(
 	kde-cli-tools
 	hyprpicker
 	archlinux-xdg-menu # To get /etc/xdg/menus/arch-applications.menu for the default-applications
+	xdg-desktop-portal-gtk # Needed for gtk apps like 'bottles' for example
 	fastfetch
 	tldr
 	kdeconnect
+	unzip
+	webapp-manager
+	wine
 )
 
 dev_packages=(
@@ -60,7 +64,8 @@ dev_packages=(
 	lld  # LLVM Linker
 	lldb # LLVM Debugger
 	code # OSS VSCode
-	direnv
+	direnv # Needed for vscode
+	zed
 	cloc # Cout Lines Of Code
 	poop # Performance Optimization & Obvervation Platform
 )
@@ -73,11 +78,22 @@ misc_packages=(
 	ark
 	gwenview
 	nextcloud-client
+	gnome-keyring   # Needed for auto-login of the nextcloud-client
+	seahorse # Needed to properly manage the gnome-keyrings
+	flatpak
 )
 
 # Install required packages
 #shellcheck disable=2068
 sudo pacman -Syy --needed ${system_packages[@]} ${dev_packages[@]} ${misc_packages[@]}
+
+# Install the required flatpak-only packages
+flatpak_packages=(
+	bottles
+)
+
+#shellcheck disable=2068
+flatpak --assumeyes install ${flatpak_packages[@]}
 
 # Activate services
 echo "-- Enabling the 'bluetooth' service..."
