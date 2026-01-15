@@ -83,9 +83,13 @@ misc_packages=(
 	flatpak
 )
 
+gaming_packages=(
+	steam
+)
+
 # Install required packages
 #shellcheck disable=2068
-sudo pacman -Syy --needed ${system_packages[@]} ${dev_packages[@]} ${misc_packages[@]}
+sudo pacman -Syy --needed ${system_packages[@]} ${dev_packages[@]} ${misc_packages[@]} ${gaming_packages[@]}
 
 # Install the required flatpak-only packages
 flatpak_packages=(
