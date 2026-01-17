@@ -42,32 +42,39 @@ system_packages=(
 	hyprpicker
 	archlinux-xdg-menu # To get /etc/xdg/menus/arch-applications.menu for the default-applications
 	xdg-desktop-portal-gtk # Needed for gtk apps like 'bottles' for example
+	kdeconnect
+	webapp-manager
+)
+
+cli_packages=(
+	wine
+	unzip
 	fastfetch
 	tldr
-	kdeconnect
-	unzip
-	webapp-manager
-	wine
+	tree
+	fzf
+	flatpak
 )
 
 dev_packages=(
 	git
 	github-cli
-	neovim
 	gitui
+	git-credential-manager-bin
 	base-devel
 	clang
 	ninja
 	cmake
-	fzf
 	zig
 	lld  # LLVM Linker
 	lldb # LLVM Debugger
-	code # OSS VSCode
-	direnv # Needed for vscode
 	zed
+	neovim
+	code   # OSS VSCode
+	direnv # Needed for vscode
 	cloc # Cout Lines Of Code
 	poop # Performance Optimization & Obvervation Platform
+	raylib
 )
 
 misc_packages=(
@@ -78,18 +85,19 @@ misc_packages=(
 	ark
 	gwenview
 	nextcloud-client
-	gnome-keyring   # Needed for auto-login of the nextcloud-client
-	seahorse # Needed to properly manage the gnome-keyrings
-	flatpak
+	btop
+	gnome-keyring # Needed for auto-login of the nextcloud-client
+	seahorse      # Needed to properly manage the gnome-keyrings
 )
 
 gaming_packages=(
 	steam
+	mangohud
 )
 
 # Install required packages
 #shellcheck disable=2068
-sudo pacman -Syy --needed ${system_packages[@]} ${dev_packages[@]} ${misc_packages[@]} ${gaming_packages[@]}
+sudo pacman -Syy --needed ${system_packages[@]} ${cli_packages[@]} ${dev_packages[@]} ${misc_packages[@]} ${gaming_packages[@]}
 
 # Install the required flatpak-only packages
 flatpak_packages=(
