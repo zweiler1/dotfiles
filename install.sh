@@ -103,6 +103,7 @@ sudo pacman -Syy --needed ${system_packages[@]} ${cli_packages[@]} ${dev_package
 # Install the required flatpak-only packages
 flatpak_packages=(
 	bottles
+	whatsie
 )
 
 #shellcheck disable=2068
