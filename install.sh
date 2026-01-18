@@ -54,6 +54,7 @@ cli_packages=(
 	tree
 	fzf
 	flatpak
+	jq # Json-Query needed for the 'toggle_screens' script
 )
 
 dev_packages=(
@@ -146,3 +147,8 @@ if ! [ -d "$HOME/.config/waybar" ]; then
 	echo "-- Creting symlink for 'kitty'..."
 	ln -sfn "$root/kitty" "$HOME/.config/kitty"
 fi
+
+echo "-- Creating symlink for the .local/bin binaries..."
+ln -sfn "$root//bin/toggle_network" "$HOME/.local/bin/toggle_network"
+ln -sfn "$root//bin/toggle_screen" "$HOME/.local/bin/toggle_screen"
+ln -sfn "$root//bin/toggle_touchpad" "$HOME/.local/bin/toggle_touchpad"

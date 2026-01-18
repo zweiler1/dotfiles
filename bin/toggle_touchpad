@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+#shellcheck disable=2016
+ACTIVE="$(cat "$HOME/.config/hypr/hyprland.conf" | grep -e '^\$TOUCHPAD_ENABLED[ ]*=[ ]*' | sed -E 's/\$TOUCHPAD_ENABLED[ ]*=[ ]*(true|false).*/\1/g')"
+
+if [ "$ACTIVE" = "true" ]; then
+	# Disable touchpad
+	notify-send -u normal "Disabling Touchpad"
+	#shellcheck disable=2016
+	sed -i -E 's/(^\$TOUCHPAD_ENABLED[ ]*=[ ]*)true/\1false/g' "$HOME/.config/hypr/hyprland.conf"
+elif [ "$ACTIVE" = "false" ]; then
+	# Enable touchpad
+	notify-send -u normal "Enabling Touchpad"
+	#shellcheck disable=2016
+	sed -i -E 's/(^\$TOUCHPAD_ENABLED[ ]*=[ ]*)false/\1true/g' "$HOME/.config/hypr/hyprland.conf"
+fi
+

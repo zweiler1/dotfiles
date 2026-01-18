@@ -1,0 +1,17 @@
+#!/usr/bin/env sh
+
+MONITOR_COUNT=$(hyprctl monitors -j | jq 'length')
+if [ "$MONITOR_COUNT" -eq 1 ]; then
+	echo "Only one screen detected, no toggling"
+	exit
+fi
+
+CONFIG_PATH="$HOME/.config/hypr/hyprland.conf"
+sed -ie "s/#[ ]*\(monitor[ ]*=[ ]*eDP-1[^\$]*\)/##\1/g" "$CONFIG_PATH"
+sed -ie "s/#[ ]*\(monitor[ ]*=[ ]*eDP-2[^\$]*\)/##\1/g" "$CONFIG_PATH"
+sed -ie "s/^\(monitor[ ]*=[ ]*eDP-1[^\$]*\)/#\1/g" "$CONFIG_PATH"
+sed -ie "s/^\(monitor[ ]*=[ ]*eDP-2[^\$]*\)/#\1/g" "$CONFIG_PATH"
+sed -ie "s/##[ ]*\(monitor[ ]*=[ ]*eDP-1[^\$]*\)/\1/g" "$CONFIG_PATH"
+sed -ie "s/##[ ]*\(monitor[ ]*=[ ]*eDP-2[^\$]*\)/\1/g" "$CONFIG_PATH"
+
+hyprctl reload

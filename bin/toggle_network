@@ -1,0 +1,15 @@
+#!/usr/bin/env sh
+
+if [ "$1" = "off" ]; then
+  echo "Turning off all radio"
+  #nmcli radio all off
+  echo "Removing mt7921e kernel module"
+  #rmmod mt7921e
+  sleep 2
+elif [ "$1" = "on" ]; then
+  echo "Turning on all radio"
+  #nmcli radio all on
+  echo "Adding mt7921e kernel module"
+  #modprobe mt7921e
+  sleep 2
+fi
