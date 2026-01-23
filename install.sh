@@ -18,9 +18,13 @@ fi
 system_packages=(
 	paru
 	hyprland
-	hyprpaper
-	hyprlauncher
-	waybar
+	# hyprpaper
+	# hyprlauncher
+	noctalia-shell
+	cliphist # Clipboard history manager
+	hyprshot
+	hyprpicker
+	# waybar
 	wl-clipboard
 	awesome-terminal-fonts
 	ttf-nerd-fonts-symbols
@@ -39,7 +43,6 @@ system_packages=(
 	qt6ct-kde
 	breeze
 	kde-cli-tools
-	hyprpicker
 	archlinux-xdg-menu # To get /etc/xdg/menus/arch-applications.menu for the default-applications
 	xdg-desktop-portal-gtk # Needed for gtk apps like 'bottles' for example
 	kdeconnect
@@ -66,6 +69,7 @@ dev_packages=(
 	clang
 	ninja
 	cmake
+	nix
 	zig
 	lld  # LLVM Linker
 	lldb # LLVM Debugger
