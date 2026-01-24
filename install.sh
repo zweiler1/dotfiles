@@ -69,7 +69,6 @@ dev_packages=(
 	clang
 	ninja
 	cmake
-	nix
 	zig
 	lld  # LLVM Linker
 	lldb # LLVM Debugger
@@ -121,11 +120,11 @@ sudo systemctl enable --now supergfxd.service
 
 # Set charge limit to 80%
 echo "-- Setting battery charge limit to 80%..."
-asusctl -c 80
+asusctl -c 80 $> /dev/null
 
 # Set default power profile when plugged in to Balanced
 echo "-- Setting power mode when plugged in to 'Balanced'..."
-asusctl profile -a Balanced
+asusctl profile -a Balanced $> /dev/null
 
 # The theme in use is 'KvAdaptaDark', you need to change it in the qt6 settings panel
 
@@ -151,6 +150,18 @@ if ! [ -d "$HOME/.config/waybar" ]; then
 
 	echo "-- Creting symlink for 'kitty'..."
 	ln -sfn "$root/kitty" "$HOME/.config/kitty"
+fi
+
+# Installing nix
+if [ "$(which nix)" = "" ]; then
+	echo "-- Installing nix..."
+	sh <(curl -L https://nixos.org/nix/install) --daemon
+	
+	echo "[INFO]: If you see 32 new users in your login screen then just add these lines to your '/etc/sddm.conf' file:"
+	echo "  [Users]"
+	echo "  HideShells=/usr/bin/nologin,/sbin/nologin,/bin/false"
+else
+	echo "-- Skipping nix installation..."
 fi
 
 echo "-- Creating symlink for the .local/bin binaries..."
