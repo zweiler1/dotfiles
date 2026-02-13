@@ -2,9 +2,12 @@
 
 MONITOR_COUNT=$(hyprctl monitors -j | jq 'length')
 if [ "$MONITOR_COUNT" -eq 1 ]; then
-	qs -c noctalia-shell ipc call toast send '{"title": "Screen Not Disabled", "body": "Only one screen detected, not turning it off", "icon": "screen-share-off"}'
-	echo "Only one screen detected, no toggling"
-	exit
+	if [ "$(hyprctl monitors -j | jq '.[0].name' | grep "eDP")" != "" ]; then
+		# Only internal screen active
+		qs -c noctalia-shell ipc call toast send '{"title": "Screen Not Disabled", "body": "Only internal screen detected, not turning it off", "icon": "screen-share-off"}'
+		echo "Only one screen detected, no toggling"
+		exit
+	fi
 fi
 
 CONFIG_PATH="$HOME/.config/hypr/hyprland.conf"
