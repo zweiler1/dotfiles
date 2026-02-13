@@ -18,13 +18,14 @@ fi
 system_packages=(
 	paru
 	hyprland
+	hyprcursor
+	rose-pine-hyprcursor
+	hyprshot
+	hyprpicker
 	# hyprpaper
 	# hyprlauncher
 	noctalia-shell
 	cliphist # Clipboard history manager
-	hyprshot
-	hyprpicker
-	# waybar
 	wl-clipboard
 	awesome-terminal-fonts
 	ttf-nerd-fonts-symbols
@@ -47,9 +48,11 @@ system_packages=(
 	xdg-desktop-portal-gtk # Needed for gtk apps like 'bottles' for example
 	kdeconnect
 	webapp-manager
+	xorg-xrdb # For proper xwayland scaling with the ~/.Xresources file
 )
 
 cli_packages=(
+	less
 	wine
 	unzip
 	fastfetch
@@ -58,6 +61,8 @@ cli_packages=(
 	fzf
 	flatpak
 	jq # Json-Query needed for the 'toggle_screens' script
+	man-db
+	man-pages
 )
 
 dev_packages=(
@@ -90,6 +95,7 @@ misc_packages=(
 	gwenview
 	nextcloud-client
 	btop
+	qdirstat
 	gnome-keyring # Needed for auto-login of the nextcloud-client
 	seahorse      # Needed to properly manage the gnome-keyrings
 )
@@ -97,6 +103,8 @@ misc_packages=(
 gaming_packages=(
 	steam
 	mangohud
+	gamemode
+	prismlauncher
 )
 
 # Install required packages
@@ -165,6 +173,19 @@ else
 fi
 
 echo "-- Creating symlink for the .local/bin binaries..."
-ln -sfn "$root//bin/toggle_network" "$HOME/.local/bin/toggle_network"
-ln -sfn "$root//bin/toggle_screen" "$HOME/.local/bin/toggle_screen"
-ln -sfn "$root//bin/toggle_touchpad" "$HOME/.local/bin/toggle_touchpad"
+ln -sfn "$root/bin/toggle_network" "$HOME/.local/bin/toggle_network"
+ln -sfn "$root/bin/toggle_screen" "$HOME/.local/bin/toggle_screen"
+ln -sfn "$root/bin/toggle_touchpad" "$HOME/.local/bin/toggle_touchpad"
+
+if ! [ -f "$HOME/.Xresources" ]; then
+	echo "-- Creating the '$HOME/.Xresources' file..."
+	sudo tee -a "$HOME/.Xresources" >/dev/null <<EOF
+Xft.dpi: 115
+Xft.autohint: 0
+Xft.lcdfilter: lcddefault
+Xft.hintstyle: hintfull
+Xft.hinting: 1
+Xft.antialias: 1
+Xft.rgba: rgb
+EOF
+fi
