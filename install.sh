@@ -188,6 +188,7 @@ else
 fi
 
 echo "-- Creating symlink for the .local/bin binaries..."
+mkdir -p "$HOME/.local/bin"
 ln -sfn "$root/bin/toggle_network" "$HOME/.local/bin/toggle_network"
 ln -sfn "$root/bin/toggle_screen" "$HOME/.local/bin/toggle_screen"
 ln -sfn "$root/bin/toggle_touchpad" "$HOME/.local/bin/toggle_touchpad"
