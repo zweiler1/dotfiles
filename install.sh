@@ -38,7 +38,7 @@ system_packages=(
 	blueman
 	pavucontrol
 	kgpg
-	asusctl
+	zweilerserver/asusctl
 	supergfxctl
 	kvantum
 	qt6ct-kde
@@ -120,6 +120,15 @@ flatpak_packages=(
 #shellcheck disable=2068
 flatpak --assumeyes install ${flatpak_packages[@]}
 
+# Add asusctl to the list of ignored updates if it's not already present, we do not want the new version
+if grep -e "^#IgnorePkg" "/etc/pacman.conf"; then
+	# The IgnorePkg option does not exist, add it
+	sudo sed -iE "s/^#IgnorePkg[^=]*=/IgnorePkg = asusctl/" "/etc/pacman.conf"
+elif [ "$(grep -e "^IgnorePkg" "/etc/pacman.conf" | grep "asusctl")" = "" ]; then
+	# The IgnorePkg option exists, but it does not contain 'asusctl'
+	sudo sed -iE 's/^\(IgnorePkg[^=]*=[^\$]*\)/\1 asusctl/' "/etc/pacman.conf"
+fi
+
 # Activate services
 echo "-- Enabling the 'bluetooth' service..."
 sudo systemctl enable --now bluetooth.service
@@ -128,11 +137,11 @@ sudo systemctl enable --now supergfxd.service
 
 # Set charge limit to 80%
 echo "-- Setting battery charge limit to 80%..."
-asusctl -c 80 $> /dev/null
+asusctl -c 80 > /dev/null
 
 # Set default power profile when plugged in to Balanced
 echo "-- Setting power mode when plugged in to 'Balanced'..."
-asusctl profile -a Balanced $> /dev/null
+asusctl profile -a Balanced > /dev/null
 
 # The theme in use is 'KvAdaptaDark', you need to change it in the qt6 settings panel
 
