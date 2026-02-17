@@ -56,7 +56,7 @@ cli_packages=(
 	wine
 	unzip
 	fastfetch
-	tldr
+	tealdeer
 	tree
 	fzf
 	flatpak
@@ -75,6 +75,7 @@ dev_packages=(
 	ninja
 	cmake
 	zig
+	zls
 	lld  # LLVM Linker
 	lldb # LLVM Debugger
 	zed
