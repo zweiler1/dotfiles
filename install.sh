@@ -149,7 +149,7 @@ asusctl profile -a Balanced > /dev/null
 if ! [ -d "$HOME/.config/nvim" ]; then
 	echo "-- Cloning the 'zweiler1/kickstart.nvim' repo into '$HOME/.config/nvim'..."
 	cd "$HOME/.config" || exit 1
-	git clone "https://github.com/zweiler1/kickstart.nvim.git"
+	git clone "https://github.com/zweiler1/kickstart.nvim.git" nvim
 	cd "$HOME" || exit 1
 fi
 
