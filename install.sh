@@ -167,6 +167,9 @@ if ! [ -d "$HOME/.config/waybar" ]; then
 
 	echo "-- Creting symlink for 'kitty'..."
 	ln -sfn "$root/kitty" "$HOME/.config/kitty"
+
+	echo "-- Creting symlink for 'noctalia'..."
+	ln -sfn "$root/noctalia" "$HOME/.config/noctalia"
 fi
 
 # Installing nix
