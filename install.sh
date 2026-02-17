@@ -22,7 +22,7 @@ system_packages=(
 	rose-pine-hyprcursor
 	hyprshot
 	hyprpicker
-	# hyprpaper
+	hyprpaper
 	# hyprlauncher
 	noctalia-shell
 	cliphist # Clipboard history manager
