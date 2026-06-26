@@ -85,6 +85,14 @@ dev_packages=(
 	cloc # Cout Lines Of Code
 	poop # Performance Optimization & Obvervation Platform
 	raylib
+	docker
+	# Profiling-related
+	valgrind
+	kcachegrind
+	perf
+	inferno # Rust port of flamegraph
+	bcc-libbpf-tools # For 'offcputime'
+	trace-cmd
 )
 
 misc_packages=(
