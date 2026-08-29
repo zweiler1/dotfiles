@@ -1,21 +1,27 @@
 #!/usr/bin/env sh
 
-MONITOR_COUNT=$(hyprctl monitors -j | jq 'length')
-if [ "$MONITOR_COUNT" -eq 1 ]; then
-	if [ "$(hyprctl monitors -j | jq '.[0].name' | grep "eDP")" != "" ]; then
-		# Only internal screen active
-		qs -c noctalia-shell ipc call toast send '{"title": "Screen Not Disabled", "body": "Only internal screen detected, not turning it off", "icon": "screen-share-off"}'
-		echo "Only one screen detected, no toggling"
-		exit
-	fi
+CONFIG_FILE="$HOME/.config/hypr/hyprland.lua"
+
+# Read the current value of the control variable (hyprland.lua:12)
+CURRENT="$(grep -o '^local disable_builtin_screen = [a-z]*' "$CONFIG_FILE" | head -n1 | awk '{print $NF}')"
+
+if [ "$CURRENT" != "true" ] && [ "$CURRENT" != "false" ]; then
+	echo "toggle_screen: couldn't find 'disable_builtin_screen' in $CONFIG_FILE"
+	exit 1
 fi
 
-CONFIG_PATH="$HOME/.config/hypr/hyprland.conf"
-sed -ie "s/#[ ]*\(monitor[ ]*=[ ]*eDP-1[^\$]*\)/##\1/g" "$CONFIG_PATH"
-sed -ie "s/#[ ]*\(monitor[ ]*=[ ]*eDP-2[^\$]*\)/##\1/g" "$CONFIG_PATH"
-sed -ie "s/^\(monitor[ ]*=[ ]*eDP-1[^\$]*\)/#\1/g" "$CONFIG_PATH"
-sed -ie "s/^\(monitor[ ]*=[ ]*eDP-2[^\$]*\)/#\1/g" "$CONFIG_PATH"
-sed -ie "s/##[ ]*\(monitor[ ]*=[ ]*eDP-1[^\$]*\)/\1/g" "$CONFIG_PATH"
-sed -ie "s/##[ ]*\(monitor[ ]*=[ ]*eDP-2[^\$]*\)/\1/g" "$CONFIG_PATH"
+if [ "$CURRENT" = "true" ]; then
+	# Enable the builtin screen (always safe)
+	sed -i 's/^local disable_builtin_screen = true$/local disable_builtin_screen = false/' "$CONFIG_FILE"
+else
+	# Disable it -> refuse if it is the only active monitor
+	ACTIVE="$(hyprctl monitors -j | jq 'map(select(.disabled == false))')"
+	if [ "$(echo "$ACTIVE" | jq 'length')" -eq 1 ] && [ "$(echo "$ACTIVE" | jq '.[0].name' | grep -i 'eDP')" != "" ]; then
+		qs -c noctalia-shell ipc call toast send '{"title": "Screen Not Disabled", "body": "Only internal screen detected, not turning it off", "icon": "screen-share-off"}'
+		echo "Only one screen detected, no toggling"
+		exit 0
+	fi
+	sed -i 's/^local disable_builtin_screen = false$/local disable_builtin_screen = true/' "$CONFIG_FILE"
+fi
 
 hyprctl reload
