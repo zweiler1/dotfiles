@@ -263,7 +263,14 @@ hl.device({
 })
 
 hl.device({
+	-- Unifying reciever
 	name = "logitech-mx-master-1",
+	enabled = true,
+	sensitivity = -0.7,
+})
+hl.device({
+	-- Bluetooth
+	name = "logitech-wireless-mouse-mx-master-1",
 	enabled = true,
 	sensitivity = -0.7,
 })
