@@ -9,14 +9,13 @@
 -- See https://wiki.hypr.land/Configuring/Basics/Monitors/
 -- hl.monitor({ output = "", mode = "preferred", position = "auto", scale = "auto" })
 
-local disable_builtin_screen = true
+local disable_builtin_screen = false
 hl.monitor({
 	output = "eDP-1",
 	disabled = disable_builtin_screen,
 	mode = "1920x1200@165",
 	position = "0x0",
 	scale = 1.5,
-	bitdepth = 10,
 }) -- DGPU
 hl.monitor({
 	output = "eDP-2",
@@ -24,15 +23,15 @@ hl.monitor({
 	mode = "1920x1200@165",
 	position = "0x0",
 	scale = 1.5,
-	bitdepth = 10,
 }) -- IGPU
 hl.monitor({ output = "DP-1", mode = "2560x1440@165", position = "0x-1200", scale = 1.25 })
 hl.monitor({ output = "DP-2", mode = "2560x1440@165", position = "0x-1200", scale = 1.25 })
 -- hl.monitor({ output = "HDMI-A-1", mode = "3840x2160@60", position = "0x-1200", scale = 2.4 })
 -- hl.monitor({ output = "HDMI-A-1", mode = "3840x2160@120", position = "0x-1200", scale = 2.4 })
 -- hl.monitor({ output = "HDMI-A-1", mode = "1920x1080@60", position = "0x-1200", scale = 1.2, bitdepth = 10 })
-hl.monitor({ output = "HDMI-A-1", mode = "1920x1080@60", position = "0x-1200", scale = 1.2 })
--- hl.monitor({ output = "HDMI-A-1", mode = "1920x1080@120", position = "0x-1200", scale = 1.0 })
+-- hl.monitor({ output = "HDMI-A-1", mode = "1920x1080@60", position = "0x-1200", scale = 1.2 })
+-- hl.monitor({ output = "HDMI-A-1", mode = "1920x1080@120", position = "0x-1200", scale = 1.2 })
+hl.monitor({ output = "HDMI-A-1", mode = "3840x2160@60", position = "0x-1200", scale = 2.4 })
 -- hl.monitor({ output = "HDMI-A-1", mode = "1920x1080@60", position = "0x-1200", scale = 1.2, bitdepth = 10, cm = "hdr", sdrbrightness = 1.1, sdrsaturation = 1.2 })
 -- hl.monitor({ output = "HDMI-A-1", mode = "1920x1080@120", position = "0x-1200", scale = 1.2, bitdepth = 10, cm = "hdr", sdrbrightness = 1.1, sdrsaturation = 1.2 })
 -- hl.monitor({ output = "HDMI-A-1", mode = "1720x1440@144", position = "-1045x-1500", scale = 1.25 })
@@ -49,11 +48,9 @@ local browser = "firefox"
 local terminal = "kitty"
 local fileManager = "dolphin"
 -- local menu        = "hyprlauncher"
-local noctalia = "qs -c noctalia-shell"
-local menu = "qs -c noctalia-shell ipc call launcher toggle"
-local controlCenter = "qs -c noctalia-shell ipc call controlCenter toggle"
-local clipboardHistory = "qs -c noctalia-shell ipc call launcher clipboard"
-local notificationDaemon = "dunst"
+local menu = "noctalia msg panel-toggle launcher"
+local controlCenter = "noctalia msg panel-toggle control-center"
+local clipboardHistory = "noctalia msg panel-toggle clipboard"
 
 -------------------
 -- AUTOSTART ------
@@ -65,7 +62,7 @@ local notificationDaemon = "dunst"
 hl.on("hyprland.start", function()
 	-- hl.exec_cmd(terminal)
 	hl.exec_cmd("nm-applet &")
-	hl.exec_cmd(noctalia)
+	hl.exec_cmd("noctalia")
 	hl.exec_cmd("hyprpaper")
 	hl.exec_cmd("/usr/lib/polkit-kde-authentication-agent-1")
 	hl.exec_cmd("kdeconnectd")
@@ -255,7 +252,7 @@ hl.gesture({
 
 -- Example per-device config
 -- See https://wiki.hypr.land/Configuring/Advanced-and-Cool/Devices/ for more
-local touchpadEnabled = false -- $TOUCHPAD_ENABLED
+local touchpadEnabled = true -- $TOUCHPAD_ENABLED
 hl.device({
 	name = "asuf1204:00-2808:0202-touchpad",
 	enabled = touchpadEnabled,
@@ -288,7 +285,7 @@ hl.bind(mainMod .. " + Q", hl.dsp.window.close())
 hl.bind("ALT + F4", hl.dsp.window.close())
 hl.bind("CTRL + ALT + ESCAPE", hl.dsp.exec_cmd("shutdown now"))
 hl.bind("CTRL + ALT + DELETE", hl.dsp.exec_cmd("reboot"))
-hl.bind("CTRL + ALT + PAUSE", hl.dsp.exit())
+hl.bind("CTRL + ALT + HOME", hl.dsp.exit())
 hl.bind(mainMod .. " + ESCAPE", hl.dsp.exec_cmd("hyprlock"))
 hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(fileManager))
 hl.bind(mainMod .. " + V", hl.dsp.window.float({ action = "toggle" }))
@@ -326,8 +323,8 @@ hl.bind(mainMod .. " + T", hl.dsp.workspace.toggle_special("terminal"))
 hl.bind(mainMod .. " + SHIFT + T", hl.dsp.window.move({ workspace = "special:terminal" }))
 
 -- Scroll through existing workspaces with mainMod + scroll
-hl.bind(mainMod .. " + mouse_down", hl.dsp.focus({ workspace = "e-1" }))
-hl.bind(mainMod .. " + mouse_up", hl.dsp.focus({ workspace = "e+1" }))
+hl.bind(mainMod .. " + mouse_down", hl.dsp.focus({ workspace = "e+1" }))
+hl.bind(mainMod .. " + mouse_up", hl.dsp.focus({ workspace = "e-1" }))
 
 -- Move/resize windows with mainMod + LMB/RMB and dragging
 hl.bind(mainMod .. " + mouse:272", hl.dsp.window.drag(), { mouse = true })
@@ -458,17 +455,13 @@ hl.bind(
 	hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"),
 	{ locked = true, repeating = true }
 )
-hl.bind("XF86AudioNext", hl.dsp.exec_cmd(noctalia .. " ipc call media next"), { locked = true, repeating = true })
-hl.bind("XF86AudioPause", hl.dsp.exec_cmd(noctalia .. " ipc call media pause"), { locked = true, repeating = true })
-hl.bind("XF86AudioPlay", hl.dsp.exec_cmd(noctalia .. " ipc call media play"), { locked = true, repeating = true })
-hl.bind("XF86AudioPrev", hl.dsp.exec_cmd(noctalia .. " ipc call media previous"), { locked = true, repeating = true })
+hl.bind("XF86AudioNext", hl.dsp.exec_cmd("playerctl next"), { locked = true, repeating = true })
+hl.bind("XF86AudioPause", hl.dsp.exec_cmd("playerctl pause"), { locked = true, repeating = true })
+hl.bind("XF86AudioPlay", hl.dsp.exec_cmd("playerctl play"), { locked = true, repeating = true })
+hl.bind("XF86AudioPrev", hl.dsp.exec_cmd("playerctl previous"), { locked = true, repeating = true })
 hl.bind("XF86MonBrightnessUp", hl.dsp.exec_cmd("brightnessctl s 10%+"), { locked = true, repeating = true })
 hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("brightnessctl s 10%-"), { locked = true, repeating = true })
-hl.bind(
-	mainMod .. " + M",
-	hl.dsp.exec_cmd(noctalia .. " ipc call media playPause"),
-	{ locked = true, repeating = true }
-)
+hl.bind(mainMod .. " + M", hl.dsp.exec_cmd("playerctl play-pause"), { locked = true, repeating = true })
 
 -- Misc control of the keys
 hl.bind("XF86TouchpadToggle", hl.dsp.exec_cmd("~/.local/bin/toggle_touchpad"), { locked = true })
@@ -591,6 +584,13 @@ hl.window_rule({ match = { float = false, workspace = "w[tv1]" }, border_size = 
 hl.window_rule({ match = { float = false, workspace = "w[tv1]" }, rounding = 0 })
 hl.window_rule({ match = { float = false, workspace = "f[1]" }, border_size = 0 })
 hl.window_rule({ match = { float = false, workspace = "f[1]" }, rounding = 0 })
+
+-- Noctalia window rules
+hl.window_rule({
+	match = { class = "dev.noctalia.Noctalia" },
+	float = true,
+	size = { 1080, 600 },
+})
 
 -- Calculator window rules
 -- hl.window_rule({ match = { class = "(galculator)", title = "(galculator)" }, float = true, size = { width_ratio = 0.1, height_ratio = 0.2 } })
