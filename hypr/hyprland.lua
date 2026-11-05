@@ -9,21 +9,45 @@
 -- See https://wiki.hypr.land/Configuring/Basics/Monitors/
 -- hl.monitor({ output = "", mode = "preferred", position = "auto", scale = "auto" })
 
-local disable_builtin_screen = false
-hl.monitor({
-	output = "eDP-1",
-	disabled = disable_builtin_screen,
-	mode = "1920x1200@165",
-	position = "0x0",
-	scale = 1.5,
-}) -- DGPU
-hl.monitor({
-	output = "eDP-2",
-	disabled = disable_builtin_screen,
-	mode = "1920x1200@165",
-	position = "0x0",
-	scale = 1.5,
-}) -- IGPU
+local INTERNAL_MONITORS = { "eDP-1", "eDP-2" }
+
+local function has_external_monitor()
+	-- returns true if any non-internal monitor is currently active
+	local monitors = hl.get_monitors() or {}
+	for _, m in ipairs(monitors) do
+		local name = m.name or m.output or ""
+		if name ~= "" and not (name == "eDP-1" or name == "eDP-2") then
+			return true
+		end
+	end
+	return false
+end
+
+local function set_internal_disabled(disabled)
+	for _, output in ipairs(INTERNAL_MONITORS) do
+		hl.monitor({
+			output = output,
+			disabled = disabled,
+			-- keep the rest of the settings so a later reload doesn't lose them
+			mode = "1920x1200@165",
+			position = "0x0",
+			scale = 1.5,
+		})
+	end
+end
+
+-- Lid closed
+hl.bind("switch:on:Lid Switch", function()
+	if has_external_monitor() then
+		set_internal_disabled(true)
+	end
+end, { locked = true })
+
+-- Lid opened
+hl.bind("switch:off:Lid Switch", function()
+	set_internal_disabled(false)
+end, { locked = true })
+
 hl.monitor({ output = "DP-1", mode = "2560x1440@165", position = "0x-1200", scale = 1.25 })
 hl.monitor({ output = "DP-2", mode = "2560x1440@165", position = "0x-1200", scale = 1.25 })
 -- hl.monitor({ output = "HDMI-A-1", mode = "3840x2160@60", position = "0x-1200", scale = 2.4 })
@@ -60,11 +84,22 @@ local clipboardHistory = "noctalia msg panel-toggle clipboard"
 -- Or execute your favorite apps at launch like this:
 
 hl.on("hyprland.start", function()
+	-- Check Lid state at startup
+	local lid = io.open("/proc/acpi/button/lid/LID/state", "r") or io.open("/proc/acpi/button/lid/LID0/state", "r")
+	if lid then
+		local content = lid:read("*a") or ""
+		lid:close()
+		if content:match("closed") and has_external_monitor() then
+			set_internal_disabled(true)
+		end
+	end
+
 	-- hl.exec_cmd(terminal)
 	hl.exec_cmd("nm-applet &")
 	hl.exec_cmd("noctalia")
 	hl.exec_cmd("hyprpaper")
-	hl.exec_cmd("/usr/lib/polkit-kde-authentication-agent-1")
+	-- hl.exec_cmd("/usr/lib/polkit-kde-authentication-agent-1")
+	hl.exec_cmd("/run/current-system/sw/libexec/polkit-kde-authentication-agent-1")
 	hl.exec_cmd("kdeconnectd")
 	hl.exec_cmd("blueman-applet")
 	hl.exec_cmd("kgpg")
@@ -428,7 +463,6 @@ hl.bind(mainMod .. " + F1", function()
 	hl.dispatch(hl.dsp.dpms({ action = "toggle", monitor = "eDP-1" }))
 	hl.dispatch(hl.dsp.dpms({ action = "toggle", monitor = "eDP-2" }))
 end)
-hl.bind(mainMod .. " + F2", hl.dsp.exec_cmd("~/.local/bin/toggle_screen"), { locked = true })
 
 -- Win + F7 / F8 for brightness control when in AsusMuxDgpu mode (the screen is connected to the integrated graphics, the shortcuts dont work in dgpu mode)
 hl.bind(mainMod .. " + F7", hl.dsp.exec_cmd("brightnessctl s 10%-"), { locked = true, repeating = true })
