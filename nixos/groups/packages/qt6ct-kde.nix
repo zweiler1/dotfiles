@@ -9,12 +9,14 @@ in
 pkgs.kdePackages.qt6ct.overrideAttrs (old: {
   pname = "qt6ct-kde";
 
-  buildInputs = (old.buildInputs or []) ++ (with pkgs.kdePackages; [
-    qtdeclarative
-    kconfig
-    kcolorscheme
-    kiconthemes
-  ]);
+  buildInputs =
+    (old.buildInputs or [ ])
+    ++ (with pkgs.kdePackages; [
+      qtdeclarative
+      kconfig
+      kcolorscheme
+      kiconthemes
+    ]);
 
-  patches = (old.patches or []) ++ [ qt6ctShenanigansPatch ];
+  patches = (old.patches or [ ]) ++ [ qt6ctShenanigansPatch ];
 })

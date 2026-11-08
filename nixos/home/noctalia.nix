@@ -1,4 +1,9 @@
-{ config, pkgs, inputs, ... }:
+{
+  config,
+  pkgs,
+  inputs,
+  ...
+}:
 
 {
   imports = [
@@ -53,7 +58,12 @@
         capsule_group = [
           {
             id = "g1";
-            members = [ "cpu" "temp" "ram" "sysmon" ];
+            members = [
+              "cpu"
+              "temp"
+              "ram"
+              "sysmon"
+            ];
             accordion = false;
             accordion_direction = "end";
             enabled = true;
@@ -64,7 +74,10 @@
 
           {
             id = "g2";
-            members = [ "network" "bluetooth" ];
+            members = [
+              "network"
+              "bluetooth"
+            ];
             accordion = false;
             accordion_direction = "end";
             enabled = true;
@@ -75,7 +88,11 @@
 
           {
             id = "g3";
-            members = [ "volume" "brightness" "battery" ];
+            members = [
+              "volume"
+              "brightness"
+              "battery"
+            ];
             accordion = false;
             accordion_direction = "end";
             enabled = true;
@@ -86,7 +103,10 @@
 
           {
             id = "g4";
-            members = [ "clipboard" "notifications" ];
+            members = [
+              "clipboard"
+              "notifications"
+            ];
             accordion = false;
             accordion_direction = "end";
             enabled = true;
@@ -97,7 +117,10 @@
 
           {
             id = "g5";
-            members = [ "network_rx" "network_tx" ];
+            members = [
+              "network_rx"
+              "network_tx"
+            ];
             accordion = false;
             accordion_direction = "end";
             enabled = true;
@@ -108,7 +131,6 @@
         ];
       };
 
-
       # -----------------------------------------------
       # BATTERY
       # -----------------------------------------------
@@ -118,7 +140,6 @@
           warning_threshold = 10;
         };
       };
-
 
       # -----------------------------------------------
       # DESKTOP WIDGETS
@@ -134,7 +155,6 @@
           visible = true;
         };
       };
-
 
       # -----------------------------------------------
       # LOCKSCREEN WIDGETS
@@ -249,19 +269,16 @@
         };
       };
 
-
       # -----------------------------------------------
       # SHELL
       # -----------------------------------------------
 
       shell = {
-        avatar_path =
-          "${config.home.homeDirectory}/dotfiles/theme-manager/themes/active/Wallpaper/wallpaper_cutout.jpg";
+        avatar_path = "${config.home.homeDirectory}/dotfiles/theme-manager/themes/active/Wallpaper/wallpaper_cutout.jpg";
 
         external_ip_enabled = true;
         screen_time_enabled = true;
       };
-
 
       # -----------------------------------------------
       # THEME
@@ -273,21 +290,17 @@
         wallpaper_scheme = "soft";
       };
 
-
       # -----------------------------------------------
       # WALLPAPER
       # -----------------------------------------------
 
       wallpaper = {
-        directory =
-          "${config.home.homeDirectory}/dotfiles/theme-manager/themes/active/Wallpaper";
+        directory = "${config.home.homeDirectory}/dotfiles/theme-manager/themes/active/Wallpaper";
 
         default = {
-          path =
-            "${config.home.homeDirectory}/dotfiles/theme-manager/themes/active/Wallpaper/wallpaper.jpg";
+          path = "${config.home.homeDirectory}/dotfiles/theme-manager/themes/active/Wallpaper/wallpaper.jpg";
         };
       };
-
 
       # -----------------------------------------------
       # WIDGETS

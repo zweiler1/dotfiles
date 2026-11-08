@@ -18,6 +18,6 @@
     btrfs-progs
     killall
     htop
-    rc #history
+    rc # history
   ];
 }

@@ -1,4 +1,11 @@
-{ pkgs, homeManagerSrc, module, optionsPath, pageName, revision ? "local" }:
+{
+  pkgs,
+  homeManagerSrc,
+  module,
+  optionsPath,
+  pageName,
+  revision ? "local",
+}:
 
 let
   # Load the Home Manager extended library.
@@ -6,21 +13,23 @@ let
 
   # Replace derivations in pkgs with lightweight representations.
   # This avoids unnecessarily instantiating packages during documentation.
-  scrubDerivations = prefixPath: attrs:
+  scrubDerivations =
+    prefixPath: attrs:
     let
-      scrubDerivation = name: value:
+      scrubDerivation =
+        name: value:
         let
           pkgAttrName = prefixPath + "." + name;
         in
-          if lib.isAttrs value then
-            scrubDerivations pkgAttrName value
-            // lib.optionalAttrs (lib.isDerivation value) {
-              outPath = "\${${pkgAttrName}}";
-            }
-          else
-            value;
+        if lib.isAttrs value then
+          scrubDerivations pkgAttrName value
+          // lib.optionalAttrs (lib.isDerivation value) {
+            outPath = "\${${pkgAttrName}}";
+          }
+        else
+          value;
     in
-      lib.mapAttrs scrubDerivation attrs;
+    lib.mapAttrs scrubDerivation attrs;
 
   # Provide a lightweight package set to the module evaluator.
   scrubbedPkgsModule = {
@@ -62,17 +71,21 @@ let
   optionsDoc = pkgs.buildPackages.nixosOptionsDoc {
     lib = pkgs.lib;
 
-    options = pkgs.lib.setAttrByPath optionsPath (pkgs.lib.getAttrFromPath optionsPath evaluated.options);
+    options = pkgs.lib.setAttrByPath optionsPath (
+      pkgs.lib.getAttrFromPath optionsPath evaluated.options
+    );
 
     documentType = "none";
   };
 
 in
-  pkgs.runCommand "${pageName}-manpage" {
+pkgs.runCommand "${pageName}-manpage"
+  {
     nativeBuildInputs = [
       pkgs.buildPackages.nixos-render-docs
     ];
-  } ''
+  }
+  ''
     mkdir -p "$out/share/man/man5"
 
     nixos-render-docs options manpage \

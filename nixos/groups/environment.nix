@@ -17,11 +17,12 @@ in
 {
   environment = {
     systemPackages =
-      systemPackages ++
-      devtoolsPackages ++
-      hyprlandPackages ++
-      kdePackages ++
-      unstablePackages ++ [
+      systemPackages
+      ++ devtoolsPackages
+      ++ hyprlandPackages
+      ++ kdePackages
+      ++ unstablePackages
+      ++ [
         qt6ctPackage
       ];
 
@@ -31,7 +32,8 @@ in
       "nixos-config-snapshot".source = ./.;
 
       # Needed for proper mime types
-      "xdg/menus/applications.menu".source = "${pkgs.kdePackages.plasma-workspace}/etc/xdg/menus/plasma-applications.menu";
+      "xdg/menus/applications.menu".source =
+        "${pkgs.kdePackages.plasma-workspace}/etc/xdg/menus/plasma-applications.menu";
     };
     sessionVariables.XDG_MENU_PREFIX = "plasma-";
   };
