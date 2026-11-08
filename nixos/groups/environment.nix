@@ -1,12 +1,6 @@
 { pkgs }:
 
 let
-  # Import the unstable channel
-  unstable = import <nixos-unstable> { };
-
-  # Packages on unstable base
-  unstablePackages = (import ./packages/unstable.nix { pkgs = unstable; }).packages;
-
   # Packages on stable base
   systemPackages = (import ./packages/pkgs.nix { pkgs = pkgs; }).packages;
   devtoolsPackages = (import ./packages/devtools.nix { pkgs = pkgs; }).packages;
@@ -21,7 +15,6 @@ in
       ++ devtoolsPackages
       ++ hyprlandPackages
       ++ kdePackages
-      ++ unstablePackages
       ++ [
         qt6ctPackage
       ];
