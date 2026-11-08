@@ -1,0 +1,398 @@
+diff --git a/drivers/gpu/drm/amd/amdgpu/amdgpu_acpi.c b/drivers/gpu/drm/amd/amdgpu/amdgpu_acpi.c
+index 8b8acf98fdfe..98fe7a61ccf2 100644
+--- a/drivers/gpu/drm/amd/amdgpu/amdgpu_acpi.c
++++ b/drivers/gpu/drm/amd/amdgpu/amdgpu_acpi.c
+@@ -677,6 +677,60 @@ bool amdgpu_acpi_is_set_uma_allocation_size_supported(void)
+ 	return amdgpu_acpi_priv.atcs.functions.set_uma_allocation_size;
+ }
+ 
++/**
++ * amdgpu_acpi_get_uma_size - Get the current UMA allocation size via ACPI
++ * @adev: Pointer to the amdgpu_device structure
++ * @uma_size_mb: Receives the currently allocated UMA size in MiB
++ *
++ * Returns 0 on success or a negative error code on failure.
++ */
++int amdgpu_acpi_get_uma_size(struct amdgpu_device *adev, u32 *uma_size_mb)
++{
++	struct amdgpu_atcs *atcs = &amdgpu_acpi_priv.atcs;
++	union acpi_object *info;
++	struct atcs_get_uma_size_output output;
++	int r = 0;
++
++	if (!uma_size_mb)
++		return -EINVAL;
++
++	if (!atcs->functions.get_uma_size)
++		return -EOPNOTSUPP;
++
++	info = amdgpu_atcs_call(atcs, ATCS_FUNCTION_GET_UMA_SIZE, NULL);
++	if (!info) {
++		drm_dbg(adev_to_drm(adev),
++			"ATCS GET_UMA_SIZE call failed\n");
++		return -EIO;
++	}
++
++	if (info->type != ACPI_TYPE_BUFFER ||
++	    !info->buffer.pointer ||
++	    info->buffer.length < sizeof(output)) {
++		drm_dbg(adev_to_drm(adev),
++			"ATCS GET_UMA_SIZE returned an invalid buffer\n");
++		r = -EINVAL;
++		goto out;
++	}
++
++	memcpy(&output, info->buffer.pointer, sizeof(output));
++
++	if (output.size < sizeof(output) ||
++	    output.size > info->buffer.length) {
++		drm_dbg(adev_to_drm(adev),
++			"ATCS GET_UMA_SIZE returned an invalid structure size: %u\n",
++			(unsigned int)output.size);
++		r = -EINVAL;
++		goto out;
++	}
++
++	*uma_size_mb = output.uma_size_mb;
++
++out:
++	kfree(info);
++	return r;
++}
++
+ /**
+  * amdgpu_acpi_pcie_notify_device_ready
+  *
+diff --git a/drivers/gpu/drm/amd/amdgpu/amdgpu_acpi.h b/drivers/gpu/drm/amd/amdgpu/amdgpu_acpi.h
+index 6569a4db5dae..2839ed02d625 100644
+--- a/drivers/gpu/drm/amd/amdgpu/amdgpu_acpi.h
++++ b/drivers/gpu/drm/amd/amdgpu/amdgpu_acpi.h
+@@ -54,11 +54,15 @@ enum amdgpu_ss {
+  * @name: Name of the carveout option
+  * @memory_carved_mb: Amount of memory carved in MB
+  * @flags: ATCS flags supported by this option
++ * @index: Firmware option index passed to ATCS
++ * @uma_size_type: Type byte passed to ATCS
+  */
+ struct amdgpu_uma_carveout_option {
+ 	char name[MAX_UMA_OPTION_NAME];
+ 	uint32_t memory_carved_mb;
+ 	uint8_t flags;
++	uint8_t index;
++	uint8_t uma_size_type;
+ };
+ 
+ /**
+@@ -72,6 +76,7 @@ struct amdgpu_uma_carveout_info {
+ 	uint8_t num_entries;
+ 	uint8_t uma_option_index;
+ 	struct mutex update_lock;
++	bool update_lock_initialized;
+ 	struct amdgpu_uma_carveout_option entries[MAX_UMA_OPTION_ENTRIES];
+ };
+ 
+@@ -99,6 +104,7 @@ int amdgpu_acpi_get_tmr_info(struct amdgpu_device *adev, u64 *tmr_offset,
+ 			     u64 *tmr_size);
+ int amdgpu_acpi_get_mem_info(struct amdgpu_device *adev, int xcc_id,
+ 			     struct amdgpu_numa_info *numa_info);
++int amdgpu_acpi_get_uma_size(struct amdgpu_device *adev, u32 *uma_size_mb);
+ 
+ void amdgpu_acpi_get_backlight_caps(struct amdgpu_dm_backlight_caps *caps);
+ bool amdgpu_acpi_should_gpu_reset(struct amdgpu_device *adev);
+@@ -117,6 +123,11 @@ static inline int amdgpu_acpi_get_mem_info(struct amdgpu_device *adev,
+ {
+ 	return -EINVAL;
+ }
++static inline int amdgpu_acpi_get_uma_size(struct amdgpu_device *adev,
++					   u32 *uma_size_mb)
++{
++	return -EINVAL;
++}
+ static inline void amdgpu_acpi_fini(struct amdgpu_device *adev) { }
+ static inline bool amdgpu_acpi_should_gpu_reset(struct amdgpu_device *adev) { return false; }
+ static inline void amdgpu_acpi_detect(void) { }
+diff --git a/drivers/gpu/drm/amd/amdgpu/amdgpu_atomfirmware.c b/drivers/gpu/drm/amd/amdgpu/amdgpu_atomfirmware.c
+index 1e21e3444802..778d360e2398 100644
+--- a/drivers/gpu/drm/amd/amdgpu/amdgpu_atomfirmware.c
++++ b/drivers/gpu/drm/amd/amdgpu/amdgpu_atomfirmware.c
+@@ -321,13 +321,22 @@ static int amdgpu_atomfirmware_get_uma_carveout_info_v2_3(struct amdgpu_device *
+ 	opts = igp_info->v23.UMASizeControlOption;
+ 
+ 	for (i = 0; i < nr_uma_options; i++) {
++		struct amdgpu_uma_carveout_option *option = &uma_info->entries[i];
++		option->index = i;
++
+ 		if (!opts[i].memoryCarvedGb)
+-			uma_info->entries[i].memory_carved_mb = 512;
++			option->memory_carved_mb = 512;
+ 		else
+-			uma_info->entries[i].memory_carved_mb = (uint32_t)opts[i].memoryCarvedGb << 10;
++			option->memory_carved_mb =
++				(uint32_t)opts[i].memoryCarvedGb << 10;
++
++		option->flags = opts[i].uma_carveout_option_flags.all8;
++
++		option->uma_size_type = option->flags;
++		option->uma_size_type &=
++			~((option->uma_size_type & AMDGPU_UMA_FLAG_AUTO) >> 1);
+ 
+-		uma_info->entries[i].flags = opts[i].uma_carveout_option_flags.all8;
+-		strscpy(uma_info->entries[i].name, opts[i].optionName, MAX_UMA_OPTION_NAME);
++		strscpy(option->name, opts[i].optionName, MAX_UMA_OPTION_NAME);
+ 	}
+ 
+ 	return 0;
+diff --git a/drivers/gpu/drm/amd/amdgpu/amdgpu_device.c b/drivers/gpu/drm/amd/amdgpu/amdgpu_device.c
+index 9269e780feb7..9a526372cb36 100644
+--- a/drivers/gpu/drm/amd/amdgpu/amdgpu_device.c
++++ b/drivers/gpu/drm/amd/amdgpu/amdgpu_device.c
+@@ -27,6 +27,7 @@
+  */
+ 
+ #include <linux/aperture.h>
++#include <linux/dmi.h>
+ #include <linux/power_supply.h>
+ #include <linux/kthread.h>
+ #include <linux/module.h>
+@@ -416,17 +417,18 @@ static ssize_t carveout_options_show(struct device *dev,
+ 		return -ENODEV;
+ 
+ 	for (int i = 0; i < uma_info->num_entries; i++) {
+-		memory_carved = uma_info->entries[i].memory_carved_mb;
+-		if (memory_carved >= SZ_1G/SZ_1M) {
+-			size += sysfs_emit_at(buf, size, "%d: %s (%u GB)\n",
+-					      i,
+-					      uma_info->entries[i].name,
+-					      memory_carved >> 10);
++		struct amdgpu_uma_carveout_option *option = &uma_info->entries[i];
++		memory_carved = option->memory_carved_mb;
++		if (memory_carved >= SZ_1G / SZ_1M) {
++			size += sysfs_emit_at(buf, size, "%u: %s (%u GB)\n",
++					     (unsigned int)option->index,
++					     option->name,
++					     memory_carved >> 10);
+ 		} else {
+-			size += sysfs_emit_at(buf, size, "%d: %s (%u MB)\n",
+-					      i,
+-					      uma_info->entries[i].name,
+-					      memory_carved);
++			size += sysfs_emit_at(buf, size, "%u: %s (%u MB)\n",
++					     (unsigned int)option->index,
++					     option->name,
++					     memory_carved);
+ 		}
+ 	}
+ 
+@@ -456,43 +458,50 @@ static ssize_t carveout_show(struct device *dev,
+ }
+ 
+ static ssize_t carveout_store(struct device *dev,
+-			      struct device_attribute *attr,
+-			      const char *buf, size_t count)
++			     struct device_attribute *attr,
++			     const char *buf, size_t count)
+ {
+ 	struct drm_device *ddev = dev_get_drvdata(dev);
+ 	struct amdgpu_device *adev = drm_to_adev(ddev);
+ 	struct amdgpu_uma_carveout_info *uma_info = &adev->uma_info;
+-	struct amdgpu_uma_carveout_option *opt;
++	struct amdgpu_uma_carveout_option *opt = NULL;
+ 	unsigned long val;
+-	uint8_t flags;
+-	int r;
++	int i, r;
+ 
+ 	r = kstrtoul(buf, 10, &val);
+ 	if (r)
+ 		return r;
+ 
+-	if (val >= uma_info->num_entries)
+-		return -EINVAL;
++	/*
++	 * The sysfs value is the firmware index, not necessarily
++	 * the array position.
++	 */
++	for (i = 0; i < uma_info->num_entries; i++) {
++		if (uma_info->entries[i].index == val) {
++			opt = &uma_info->entries[i];
++			break;
++		}
++	}
+ 
+-	val = array_index_nospec(val, uma_info->num_entries);
+-	opt = &uma_info->entries[val];
++	if (!opt)
++		return -EINVAL;
+ 
+ 	if (!(opt->flags & AMDGPU_UMA_FLAG_AUTO) &&
+ 	    !(opt->flags & AMDGPU_UMA_FLAG_CUSTOM)) {
+-		drm_err_once(ddev, "Option %lu not supported due to lack of Custom/Auto flag", val);
++		drm_err_once(ddev,
++			     "Option %lu not supported due to lack of Custom/Auto flag",
++			     val);
+ 		return -EINVAL;
+ 	}
+ 
+-	flags = opt->flags;
+-	flags &= ~((flags & AMDGPU_UMA_FLAG_AUTO) >> 1);
+-
+ 	guard(mutex)(&uma_info->update_lock);
+ 
+-	r = amdgpu_acpi_set_uma_allocation_size(adev, val, flags);
++	r = amdgpu_acpi_set_uma_allocation_size(adev, opt->index,
++						opt->uma_size_type);
+ 	if (r)
+ 		return r;
+ 
+-	uma_info->uma_option_index = val;
++	uma_info->uma_option_index = opt->index;
+ 
+ 	return count;
+ }
+@@ -509,8 +518,88 @@ const struct attribute_group amdgpu_uma_attr_group = {
+ 	.attrs = amdgpu_uma_attrs
+ };
+ 
++/*
++ * The FA617NS.419 firmware exposes ATCS UMA GET/SET but its
++ * Integrated System Info table is revision 2.2, which does not
++ * provide the v2.3 UMA option metadata.
++ *
++ * The two indices below have been verified experimentally:
++ *   index 1 -> Productivity -> 512 MiB
++ *   index 2 -> Gaming       -> 2048 MiB
++ *
++ * Keep this fallback restricted to the tested machine and BIOS.
++ */
++static int amdgpu_uma_sysfs_init_fa617ns(struct amdgpu_device *adev)
++{
++	static const struct dmi_system_id fa617ns_systems[] = {
++		{
++			.ident = "ASUS TUF Gaming A16 FA617NS, BIOS 419",
++			.matches = {
++				DMI_MATCH(DMI_SYS_VENDOR, "ASUSTeK COMPUTER INC."),
++				DMI_MATCH(DMI_PRODUCT_NAME,
++					  "ASUS TUF Gaming A16 FA617NS_FA617NS"),
++				DMI_MATCH(DMI_BOARD_NAME, "FA617NS"),
++				DMI_MATCH(DMI_BIOS_VERSION, "FA617NS.419"),
++			},
++		},
++		{ }
++	};
++
++	static const struct amdgpu_uma_carveout_option options[] = {
++		{
++			.name = "Productivity",
++			.memory_carved_mb = 512,
++			.flags = AMDGPU_UMA_FLAG_CUSTOM,
++			.index = 1,
++			.uma_size_type = 0,
++		},
++		{
++			.name = "Gaming",
++			.memory_carved_mb = 2048,
++			.flags = AMDGPU_UMA_FLAG_CUSTOM,
++			.index = 2,
++			.uma_size_type = 0,
++		},
++	};
++
++	struct amdgpu_uma_carveout_info *uma_info = &adev->uma_info;
++	u32 current_size_mb;
++	int r;
++
++	if (!dmi_check_system(fa617ns_systems))
++		return -ENODEV;
++
++	r = amdgpu_acpi_get_uma_size(adev, &current_size_mb);
++	if (r)
++		return r;
++
++	switch (current_size_mb) {
++	case 512:
++		uma_info->uma_option_index = 1;
++		break;
++	case 2048:
++		uma_info->uma_option_index = 2;
++		break;
++	default:
++		drm_dbg(adev_to_drm(adev),
++			"FA617NS firmware reported unsupported UMA size: %u MiB\n",
++			current_size_mb);
++		return -EINVAL;
++	}
++
++	memcpy(uma_info->entries, options, sizeof(options));
++	uma_info->num_entries = ARRAY_SIZE(options);
++
++	drm_dbg(adev_to_drm(adev),
++		"Using FA617NS.419 ATCS UMA options; current allocation: %u MiB\n",
++		current_size_mb);
++
++	return 0;
++}
++
+ static void amdgpu_uma_sysfs_init(struct amdgpu_device *adev)
+ {
++	struct amdgpu_uma_carveout_info *uma_info = &adev->uma_info;
+ 	int rc;
+ 
+ 	if (!(adev->flags & AMD_IS_APU))
+@@ -519,37 +608,44 @@ static void amdgpu_uma_sysfs_init(struct amdgpu_device *adev)
+ 	if (!amdgpu_acpi_is_set_uma_allocation_size_supported())
+ 		return;
+ 
+-	rc = amdgpu_atomfirmware_get_uma_carveout_info(adev, &adev->uma_info);
++	rc = amdgpu_atomfirmware_get_uma_carveout_info(adev, uma_info);
++
++	/*
++	 * The tested FA617NS.419 has Integrated System Info v2.2.
++	 * The normal v2.3 parser returns -ENODEV for that revision.
++	 */
++	if (rc == -ENODEV)
++		rc = amdgpu_uma_sysfs_init_fa617ns(adev);
++
+ 	if (rc) {
+ 		drm_dbg(adev_to_drm(adev),
+-			"Failed to parse UMA carveout info from VBIOS: %d\n", rc);
+-		goto out_info;
++			"Failed to initialize UMA carveout options: %d\n", rc);
++		return;
+ 	}
+ 
+-	mutex_init(&adev->uma_info.update_lock);
++	mutex_init(&uma_info->update_lock);
++	uma_info->update_lock_initialized = true;
+ 
+ 	rc = devm_device_add_group(adev->dev, &amdgpu_uma_attr_group);
+ 	if (rc) {
+-		drm_dbg(adev_to_drm(adev), "Failed to add UMA carveout sysfs interfaces %d\n", rc);
+-		goto out_attr;
+-	}
+-
+-	return;
++		drm_dbg(adev_to_drm(adev),
++			"Failed to add UMA carveout sysfs interfaces: %d\n", rc);
+ 
+-out_attr:
+-	mutex_destroy(&adev->uma_info.update_lock);
+-out_info:
+-	return;
++		mutex_destroy(&uma_info->update_lock);
++		uma_info->update_lock_initialized = false;
++		uma_info->num_entries = 0;
++	}
+ }
+ 
+ static void amdgpu_uma_sysfs_fini(struct amdgpu_device *adev)
+ {
+ 	struct amdgpu_uma_carveout_info *uma_info = &adev->uma_info;
+ 
+-	if (!amdgpu_acpi_is_set_uma_allocation_size_supported())
++	if (!uma_info->update_lock_initialized)
+ 		return;
+ 
+ 	mutex_destroy(&uma_info->update_lock);
++	uma_info->update_lock_initialized = false;
+ 	uma_info->num_entries = 0;
+ }

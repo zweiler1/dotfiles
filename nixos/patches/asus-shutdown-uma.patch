@@ -1,0 +1,54 @@
+diff --git a/asus-shutdown/src/main.rs b/asus-shutdown/src/main.rs
+--- a/asus-shutdown/src/main.rs
++++ b/asus-shutdown/src/main.rs
+@@ -98,5 +98,5 @@
+             _ = sigterm.recv() => {
+-                warn!("Received SIGTERM");
+-                warn!("Deferring exit until deferred shutdown apply reaches a safe completion point");
++                warn!("Received SIGTERM, exiting cleanly");
++                break;
+             }
+             event = shutdown_events.next() => {
+@@ -239,4 +239,42 @@
+     info!("[phase 5/6] Preparing NVIDIA stack safety gates before firmware writes...");
+     prepare_nvidia_for_gpu_firmware_writes().await;
+
++    // The UMA carveout is applied by firmware on the next boot. Update it
++    // from the queued GPU mode before applying the queued firmware attributes.
++    let dgpu_disable = queued
++        .iter()
++        .find(|action| action.name.as_str() == "dgpu_disable")
++        .map(|action| action.value);
++    let gpu_mux_mode = queued
++        .iter()
++        .find(|action| action.name.as_str() == "gpu_mux_mode")
++        .map(|action| action.value);
++
++    match (dgpu_disable, gpu_mux_mode) {
++        (Some(dgpu_disable), Some(gpu_mux_mode)) => {
++            info!(
++                "Selecting UMA carveout for queued GPU mode: dgpu_disable={}, gpu_mux_mode={}",
++                dgpu_disable, gpu_mux_mode
++            );
++            match std::process::Command::new("/run/current-system/sw/bin/amdgpu-uma-mode")
++                .arg(dgpu_disable.to_string())
++                .arg(gpu_mux_mode.to_string())
++                .status()
++            {
++                Ok(status) if status.success() => {
++                    info!("UMA carveout update completed");
++                }
++                Ok(status) => {
++                    warn!("UMA carveout helper exited with status {status}");
++                }
++                Err(err) => {
++                    warn!("Failed to execute UMA carveout helper: {err}");
++                }
++            }
++        }
++        _ => {
++            info!("No complete queued GPU mode found; leaving UMA carveout unchanged");
++        }
++    }
++
+     info!("[phase 6/6] Proceeding with applying deferred GPU settings");
