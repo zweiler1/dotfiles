@@ -9,10 +9,10 @@
     # Include the results of the hardware scan.
     ./hardware-configuration.nix
     # Groupings to make the configuration.nix file smaller
-    (import ./groups/environment.nix { inherit pkgs; })
-    (import ./groups/hardware.nix { inherit pkgs; })
+    ./groups/environment.nix
+    ./groups/hardware.nix
     ./groups/networking.nix
-    (import ./groups/services.nix { inherit pkgs; })
+    ./groups/services.nix
     ./groups/programs.nix
     ./groups/systemd.nix
     ./groups/virtualisation.nix

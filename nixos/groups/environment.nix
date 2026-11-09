@@ -1,4 +1,7 @@
-{ pkgs }:
+{
+  pkgs,
+  ...
+}:
 
 let
   # Packages on stable base

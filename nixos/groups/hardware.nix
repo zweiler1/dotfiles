@@ -1,4 +1,8 @@
-{ pkgs }:
+{
+  pkgs,
+  ...
+}:
+
 {
   hardware = {
     # Needed by noctalia

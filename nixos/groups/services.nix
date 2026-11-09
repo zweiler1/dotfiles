@@ -1,4 +1,8 @@
-{ pkgs }:
+{
+  pkgs,
+  ...
+}:
+
 {
   services = {
     # Enable the X11 windowing system.
@@ -19,14 +23,12 @@
     printing.enable = true;
 
     # Enable sound with pipewire.
-    pulseaudio.enable = false;
     pipewire = {
       enable = true;
       alsa.enable = true;
       alsa.support32Bit = true;
       pulse.enable = true;
-      # If you want to use JACK applications, uncomment this
-      # jack.enable = true;
+      jack.enable = true;
     };
 
     # Enable pinentry for gnupg
