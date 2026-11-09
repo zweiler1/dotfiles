@@ -14,6 +14,7 @@
     ./groups/networking.nix
     ./groups/services.nix
     ./groups/programs.nix
+    ./groups/steam.nix
     ./groups/systemd.nix
     ./groups/virtualisation.nix
   ];
