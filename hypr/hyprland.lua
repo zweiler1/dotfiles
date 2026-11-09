@@ -120,7 +120,6 @@ hl.env("HYPRCURSOR_SIZE", "16")
 -- hl.env("QT_QPA_PLATFORM", "wayland")
 hl.env("HYPRCURSER_THEME", "rose-pine-hyprcursor")
 hl.env("QT_QPA_PLATFORMTHEME", "qt6ct")
-hl.env("QT_STYLE_OVERRIDE", "qt6ct")
 hl.env("XDG_MENU_PREFIX", "arch-")
 hl.env("GDK_SCALE", "1.5")
 
