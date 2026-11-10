@@ -4,6 +4,9 @@
   ...
 }:
 
+let
+  pkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system};
+in
 {
   # Home Manager needs a bit of information about you and the paths it should
   # manage.
@@ -35,6 +38,10 @@
     [
       # Manpages
       docs.noctalia-manpage
+
+      # Unstable packages
+      pkgsUnstable.opencode
+      pkgsUnstable.zig
     ];
 
   # Home Manager is pretty good at managing dotfiles. The primary way to manage
