@@ -45,5 +45,8 @@
       enable = true;
       package = import ./packages/asusctl-uma.nix { inherit pkgs; };
     };
+
+    # Keyring to remember passwords
+    gnome.gnome-keyring.enable = true;
   };
 }
