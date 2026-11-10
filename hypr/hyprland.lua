@@ -12,29 +12,107 @@
 local INTERNAL_MONITORS = { "eDP-1", "eDP-2" }
 
 local function has_external_monitor()
-	-- returns true if any non-internal monitor is currently active
-	local monitors = hl.get_monitors() or {}
-	for _, m in ipairs(monitors) do
+	for _, m in ipairs(hl.get_monitors() or {}) do
 		local name = m.name or m.output or ""
-		if name ~= "" and not (name == "eDP-1" or name == "eDP-2") then
+		if name ~= "" and name ~= "eDP-1" and name ~= "eDP-2" then
 			return true
 		end
 	end
 	return false
 end
 
-local function set_internal_disabled(disabled)
+local function get_first_external_monitor()
+	for _, m in ipairs(hl.get_monitors() or {}) do
+		local name = m.name or m.output or ""
+		if name ~= "" and name ~= "eDP-1" and name ~= "eDP-2" and not m.disabled then
+			return name
+		end
+	end
+	return nil
+end
+
+local function migrate_workspaces_from_internal()
+	local target = get_first_external_monitor()
+	if not target then
+		return
+	end
+
+	for _, ws in ipairs(hl.get_workspaces() or {}) do
+		local mon_name = ""
+		if type(ws.monitor) == "table" then
+			mon_name = ws.monitor.name or ws.monitor.output or ""
+		elseif type(ws.monitor) == "string" then
+			mon_name = ws.monitor
+		end
+
+		if mon_name == "eDP-1" or mon_name == "eDP-2" then
+			hl.dispatch(hl.dsp.workspace.move({
+				workspace = ws.id or ws.name,
+				monitor = target,
+			}))
+		end
+	end
+end
+
+local function apply_internal_rule(disabled)
 	for _, output in ipairs(INTERNAL_MONITORS) do
 		hl.monitor({
 			output = output,
 			disabled = disabled,
-			-- keep the rest of the settings so a later reload doesn't lose them
-			mode = "1920x1200@165",
+			mode = "1920x1080@165",
 			position = "0x0",
 			scale = 1.5,
 		})
 	end
 end
+
+local function set_internal_disabled(disabled)
+	-- Remember what the user is currently looking at
+	local current_ws = hl.get_active_workspace()
+	local current_ws_id = current_ws and (current_ws.id or current_ws.name) or nil
+
+	-- First application
+	apply_internal_rule(disabled)
+
+	-- Second application + cleanup after a short delay
+	hl.timer(function()
+		apply_internal_rule(disabled)
+
+		if disabled and has_external_monitor() then
+			migrate_workspaces_from_internal()
+
+			local target = get_first_external_monitor()
+			if target then
+				hl.dispatch(hl.dsp.focus({ monitor = target }))
+			end
+		end
+
+		-- Restore the workspace the user was on
+		if current_ws_id then
+			hl.dispatch(hl.dsp.focus({ workspace = current_ws_id }))
+		end
+	end, { timeout = 50, type = "oneshot" })
+end
+
+local function apply_lid_state()
+	local lid = io.open("/proc/acpi/button/lid/LID/state", "r") or io.open("/proc/acpi/button/lid/LID0/state", "r")
+	if not lid then
+		return
+	end
+
+	local content = lid:read("*a") or ""
+	lid:close()
+
+	local want_disabled = content:match("closed") and has_external_monitor()
+	set_internal_disabled(want_disabled)
+end
+
+-- Events
+hl.on("config.reloaded", function()
+	hl.timer(function()
+		apply_lid_state()
+	end, { timeout = 100, type = "oneshot" })
+end)
 
 -- Lid closed
 hl.bind("switch:on:Lid Switch", function()
@@ -85,14 +163,7 @@ local clipboardHistory = "noctalia msg panel-toggle clipboard"
 
 hl.on("hyprland.start", function()
 	-- Check Lid state at startup
-	local lid = io.open("/proc/acpi/button/lid/LID/state", "r") or io.open("/proc/acpi/button/lid/LID0/state", "r")
-	if lid then
-		local content = lid:read("*a") or ""
-		lid:close()
-		if content:match("closed") and has_external_monitor() then
-			set_internal_disabled(true)
-		end
-	end
+	apply_lid_state()
 
 	-- hl.exec_cmd(terminal)
 	hl.exec_cmd("nm-applet &")
