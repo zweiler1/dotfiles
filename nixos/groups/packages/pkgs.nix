@@ -21,6 +21,7 @@
 
     vscodium
     direnv
+    zed-editor
 
     virt-manager
     virtio-win
