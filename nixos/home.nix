@@ -13,6 +13,7 @@
   imports = [
     ./home/git.nix
     ./home/lutris.nix
+    ./home/nextcloud.nix
     ./home/noctalia.nix
   ];
 

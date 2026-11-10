@@ -20,7 +20,12 @@
     kio
     kservice # Provides kbuildsycoca6
     plasma-workspace # For the XDG menu fix (mime types)
-    kirigami
+
+    # QML dependencies
+    kirigami.unwrapped
+    qqc2-desktop-style
+    sonnet
+
     frameworkintegration
   ];
 }

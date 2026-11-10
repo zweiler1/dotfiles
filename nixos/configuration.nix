@@ -61,8 +61,8 @@
   security.rtkit.enable = true;
   security.polkit.enable = true;
 
-  # Enable touchpad support (enabled default in most desktopManager).
-  # services.libinput.enable = true;
+  # Enable Qt runtime plugin and QML module discovery
+  qt.enable = true;
 
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users."zweiler1" = {
