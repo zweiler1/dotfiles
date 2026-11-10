@@ -7,6 +7,7 @@
     fzf
     fastfetch
     amdgpu_top
+    qdirstat
 
     neovim
     gcc
