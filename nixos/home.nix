@@ -14,11 +14,11 @@ in
   home.homeDirectory = "/home/zweiler1";
 
   imports = [
-    ./home/bash.nix
     ./home/git.nix
     ./home/lutris.nix
     ./home/nextcloud.nix
     ./home/noctalia.nix
+    ./home/shell.nix
   ];
 
   # This value determines the Home Manager release that your configuration is
