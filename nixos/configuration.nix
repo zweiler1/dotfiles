@@ -1,9 +1,17 @@
 {
   pkgs,
   inputs,
+  config,
   ...
 }:
 
+let
+  ryzen-smu = config.boot.kernelPackages.ryzen-smu.overrideAttrs (old: {
+    patches = (old.patches or [ ]) ++ [
+      ./patches/ryzen-smu-cpuid-api.patch
+    ];
+  });
+in
 {
   imports = [
     # Include the results of the hardware scan.
@@ -33,6 +41,10 @@
         patch = ./patches/amdgpu-uma.patch;
       }
     ];
+
+    kernelModules = [ "ryzen_smu" ];
+
+    extraModulePackages = [ ryzen-smu ];
   };
 
   nix.settings.experimental-features = [

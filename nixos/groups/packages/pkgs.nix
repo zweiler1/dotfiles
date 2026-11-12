@@ -19,6 +19,7 @@
 
     vulkan-tools
     mesa-demos
+    ryzenadj # Needed to set max CPU temp to 85°C in the 'ryzenadj-tctl' service
 
     vscodium
     direnv

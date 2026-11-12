@@ -1,0 +1,9 @@
+diff --git a/smu.c b/smu.c
+--- a/smu.c
++++ b/smu.c
+@@ -5,4 +5,5 @@
+ /* Ryzen SMU Root Complex Communication */
+
++#include <asm/cpuid/api.h>
+ #include <asm/io.h>
+ #include <linux/delay.h>

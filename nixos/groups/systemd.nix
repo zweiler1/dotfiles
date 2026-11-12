@@ -10,25 +10,39 @@
       "d /etc/asusd 0755 root root -"
     ];
 
-    user.services.rebuild-ksycoca = {
-      description = "Rebuild KDE ksycoca cache (MIME / service types)";
-      wantedBy = [ "graphical-session.target" ];
-      after = [ "graphical-session.target" ];
-      serviceConfig = {
-        Type = "oneshot";
-        ExecStart = pkgs.writeShellScript "rebuild-ksycoca" ''
-          rm -f "$HOME"/.cache/ksycoca6_*
-          ${pkgs.kdePackages.kservice}/bin/kbuildsycoca6 --noincremental
-        '';
+    user.services = {
+      rebuild-ksycoca = {
+        description = "Rebuild KDE ksycoca cache (MIME / service types)";
+        wantedBy = [ "graphical-session.target" ];
+        after = [ "graphical-session.target" ];
+        serviceConfig = {
+          Type = "oneshot";
+          ExecStart = pkgs.writeShellScript "rebuild-ksycoca" ''
+            rm -f "$HOME"/.cache/ksycoca6_*
+            ${pkgs.kdePackages.kservice}/bin/kbuildsycoca6 --noincremental
+          '';
+        };
       };
     };
 
-    services.asus-shutdown = {
-      overrideStrategy = "asDropinIfExists";
+    services = {
+      asus-shutdown = {
+        overrideStrategy = "asDropinIfExists";
 
-      serviceConfig.ReadWritePaths = [
-        "/sys/devices/pci0000:00/0000:00:08.1/0000:77:00.0/uma/carveout"
-      ];
+        serviceConfig.ReadWritePaths = [
+          "/sys/devices/pci0000:00/0000:00:08.1/0000:77:00.0/uma/carveout"
+        ];
+      };
+      ryzenadj-tctl = {
+        description = "Set Ryzen APU Tctl temperature limit";
+        wantedBy = [ "multi-user.target" ];
+        requires = [ "systemd-modules-load.service" ];
+        after = [ "systemd-modules-load.service" ];
+        serviceConfig = {
+          Type = "oneshot";
+          ExecStart = "${pkgs.ryzenadj}/bin/ryzenadj --tctl-temp=85";
+        };
+      };
     };
   };
 }
