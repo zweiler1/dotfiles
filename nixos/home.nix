@@ -14,6 +14,7 @@ in
   home.homeDirectory = "/home/zweiler1";
 
   imports = [
+    ./home/bash.nix
     ./home/git.nix
     ./home/lutris.nix
     ./home/nextcloud.nix
