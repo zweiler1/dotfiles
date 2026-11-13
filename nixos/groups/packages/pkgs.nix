@@ -25,7 +25,6 @@
     direnv
     zed-editor
 
-    virt-manager
     virtio-win
     spice-gtk
     dnsmasq

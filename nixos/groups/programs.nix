@@ -17,5 +17,7 @@
     };
 
     git.enable = true;
+
+    virt-manager.enable = true;
   };
 }
