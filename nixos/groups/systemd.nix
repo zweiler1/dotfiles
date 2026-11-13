@@ -33,6 +33,7 @@
           "/sys/devices/pci0000:00/0000:00:08.1/0000:77:00.0/uma/carveout"
         ];
       };
+
       ryzenadj-tctl = {
         description = "Set Ryzen APU Tctl temperature limit";
         wantedBy = [ "multi-user.target" ];

@@ -5,6 +5,7 @@
     vim
     wget
     fzf
+    eza
     fastfetch
     amdgpu_top
     qdirstat

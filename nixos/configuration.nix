@@ -86,6 +86,7 @@ in
       "libvirtd"
       "kvm"
     ];
+    shell = pkgs.fish;
   };
 
   home-manager = {

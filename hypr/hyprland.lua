@@ -172,7 +172,7 @@ hl.on("hyprland.start", function()
 	hl.exec_cmd("blueman-applet")
 	hl.exec_cmd("kgpg")
 	hl.exec_cmd("xrdb ~/.Xresources")
-	hl.exec_cmd("nextcloud &")
+	hl.exec_cmd("nextcloud")
 
 	hl.exec_cmd(browser, { workspace = 1 })
 	hl.exec_cmd(terminal, { workspace = "special:terminal", no_initial_focus = true })
