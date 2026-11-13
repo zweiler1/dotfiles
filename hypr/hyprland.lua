@@ -165,16 +165,14 @@ hl.on("hyprland.start", function()
 	-- Check Lid state at startup
 	apply_lid_state()
 
-	-- hl.exec_cmd(terminal)
-	hl.exec_cmd("nm-applet &")
 	hl.exec_cmd("noctalia")
 	hl.exec_cmd("hyprpaper")
-	-- hl.exec_cmd("/usr/lib/polkit-kde-authentication-agent-1")
 	hl.exec_cmd("/run/current-system/sw/libexec/polkit-kde-authentication-agent-1")
 	hl.exec_cmd("kdeconnectd")
 	hl.exec_cmd("blueman-applet")
 	hl.exec_cmd("kgpg")
 	hl.exec_cmd("xrdb ~/.Xresources")
+	hl.exec_cmd("nextcloud &")
 
 	hl.exec_cmd(browser, { workspace = 1 })
 	hl.exec_cmd(terminal, { workspace = "special:terminal", no_initial_focus = true })
