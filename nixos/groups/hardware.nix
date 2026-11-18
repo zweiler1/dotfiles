@@ -29,5 +29,7 @@
     };
 
     amdgpu.initrd.enable = true;
+
+    xone.enable = true;
   };
 }
