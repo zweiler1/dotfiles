@@ -1,7 +1,21 @@
 {
+  pkgs,
+  ...
+}:
+
+{
   programs = {
     # Enable binaries to be executable
-    nix-ld.enable = true;
+    nix-ld = {
+      enable = true;
+
+      # All the libraries "raw" executables may need to use
+      libraries = with pkgs; [
+        stdenv.cc.cc.lib
+        zlib
+        musl
+      ];
+    };
 
     firefox.enable = true;
 

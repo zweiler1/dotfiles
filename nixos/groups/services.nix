@@ -48,5 +48,8 @@
 
     # Keyring to remember passwords
     gnome.gnome-keyring.enable = true;
+
+    # Pretend /usr/bin exists and is filled with good stuff
+    envfs.enable = true;
   };
 }
