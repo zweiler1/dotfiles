@@ -1,10 +1,20 @@
 {
+  pkgs,
+  ...
+}:
+
+{
   virtualisation = {
     libvirtd = {
       enable = true;
 
-      # Enable TPM emulation (for Windows 11)
-      qemu.swtpm.enable = true;
+      qemu = {
+        # Enable TPM emulation (for Windows 11)
+        swtpm.enable = true;
+        vhostUserPackages = with pkgs; [
+          virtiofsd
+        ];
+      };
     };
 
     # Enable USB redirection

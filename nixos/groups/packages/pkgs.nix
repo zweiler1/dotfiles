@@ -9,6 +9,9 @@
     fastfetch
     amdgpu_top
     qdirstat
+    tree
+    bat
+    tldr
 
     neovim
     gcc
