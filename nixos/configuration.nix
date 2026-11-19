@@ -24,6 +24,7 @@ in
     ./groups/programs.nix
     ./groups/steam.nix
     ./groups/systemd.nix
+    ./groups/vfio.nix
     ./groups/virtualisation.nix
   ];
 
